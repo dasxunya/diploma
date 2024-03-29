@@ -2,13 +2,17 @@ package org.dasxunya.diploma;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-public class TestClass extends AnAction {
+public class ParameterizedTestsPlugin extends AnAction {
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
-        Messages.showMessageDialog("Hi", "Hi", Messages.getInformationIcon());
+        Project project = anActionEvent.getProject();
+        Messages.showMessageDialog(project, "Hello, You just clicked the IntelliJ project view popup menu action item.",
+                "Project View Action", Messages.getInformationIcon());
     }
 
     @Override
