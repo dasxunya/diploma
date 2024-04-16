@@ -25,11 +25,14 @@
 
     </extensions>
     <actions>
-        <group id = "org.dasxunya">
-        <action id="org.dasxunya.diploma.ParameterizedTestsPlugin" class="org.dasxunya.diploma.ParameterizedTestsPlugin"
-                text="Test-Cases Generator" description="Test-cases generator">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-        </action>
+        <group id="org.dasxunya">
+            <action
+                    id="org.dasxunya.diploma.ParameterizedTestsPlugin"
+                    class="org.dasxunya.diploma.ParameterizedTestsPlugin"
+                    text="Generate Test Template"
+                    description="Test-cases generator">
+                <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            </action>
         </group>
     </actions>
 </idea-plugin>
