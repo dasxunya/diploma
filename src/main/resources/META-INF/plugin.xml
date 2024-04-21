@@ -1,11 +1,12 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<!--suppress PluginXmlCapitalization -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>org.dasxunya.diploma</id>
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>Diploma</name>
+    <name>Unit tests generator</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="dasxunya@gmail.com" url="https://www.yourcompany.com">Dasxunya</vendor>
@@ -18,18 +19,21 @@
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
-
+    <depends>com.intellij.modules.java</depends>
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
 
     </extensions>
     <actions>
-        <group id = "org.dasxunya">
-        <action id="org.dasxunya.diploma.ParameterizedTestsPlugin" class="org.dasxunya.diploma.ParameterizedTestsPlugin"
-                text="Test-Cases Generator" description="Test-cases generator">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-        </action>
+        <group id="org.dasxunya">
+            <action
+                    id="org.dasxunya.diploma.UnitTestsPlugin"
+                    class="org.dasxunya.diploma.UnitTestsPlugin"
+                    text="Generate Test Template"
+                    description="Test-cases generator">
+                <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            </action>
         </group>
     </actions>
 </idea-plugin>

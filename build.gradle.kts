@@ -5,7 +5,13 @@ plugins {
 }
 
 group = "org.dasxunya"
-version = "1.0-SNAPSHOT"
+version = "1.15.1-SNAPSHOT"
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+    testCompileOnly("org.projectlombok:lombok:1.18.30")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
+}
 
 repositories {
     mavenCentral()
@@ -17,7 +23,7 @@ intellij {
     version.set("2023.1.5")
     type.set("IC") // Target IDE Platform
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+    plugins.set(listOf("com.intellij.java"))
 }
 
 tasks {
@@ -44,4 +50,18 @@ tasks {
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
+
+    test {
+        useJUnitPlatform()
+    }
 }
+
+sourceSets {
+    test {
+
+        java.srcDirs("src/test/java")
+
+        //resources.srcDirs("src/test/resources")
+    }
+}
+
