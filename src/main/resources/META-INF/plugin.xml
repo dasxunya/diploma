@@ -28,8 +28,8 @@
     <actions>
         <group id="org.dasxunya">
             <action
-                    id="org.dasxunya.diploma.ParameterizedTestsPlugin"
-                    class="org.dasxunya.diploma.ParameterizedTestsPlugin"
+                    id="org.dasxunya.diploma.UnitTestsPlugin"
+                    class="org.dasxunya.diploma.UnitTestsPlugin"
                     text="Generate Test Template"
                     description="Test-cases generator">
                 <add-to-group group-id="EditorPopupMenu" anchor="last"/>

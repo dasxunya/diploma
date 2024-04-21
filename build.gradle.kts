@@ -7,6 +7,10 @@ plugins {
 group = "org.dasxunya"
 version = "1.0-SNAPSHOT"
 
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+}
+
 repositories {
     mavenCentral()
 }
