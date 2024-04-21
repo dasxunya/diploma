@@ -11,7 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.dasxunya.diploma.Generator.UnitTestsGenerator;
+import org.dasxunya.diploma.generator.UnitTestsGenerator;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnitTestsPlugin extends AnAction {
 
     //region Поля
-    private UnitTestsGenerator generator;
+    private final UnitTestsGenerator generator;
     //endregion
 
     //region Конструкторы

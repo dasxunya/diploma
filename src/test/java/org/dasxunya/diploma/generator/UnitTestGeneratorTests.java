@@ -1,4 +1,4 @@
-package org.dasxunya.diploma.Generator;
+package org.dasxunya.diploma.generator;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

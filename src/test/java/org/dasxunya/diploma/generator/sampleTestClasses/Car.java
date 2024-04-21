@@ -1,4 +1,4 @@
-package org.dasxunya.diploma.Generator.SampleTestClasses;
+package org.dasxunya.diploma.generator.sampleTestClasses;
 
 import lombok.Getter;
 import lombok.Setter;

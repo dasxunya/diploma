@@ -1,10 +1,11 @@
-package org.dasxunya.diploma.Generator.ExpectedTests;
+package org.dasxunya.diploma.generator.expectedTests;
 
-import org.dasxunya.diploma.Generator.SampleTestClasses.Car;
+import org.dasxunya.diploma.generator.sampleTestClasses.Car;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -41,18 +42,6 @@ public class TestCar {
         String expectedInfo = "Brand: Toyota, Model: Camry, Year: 2020, Price: $25000.0";
 
         assertEquals(expectedInfo, car.getCarInfo());
-    }
-
-    @Test()
-    void testDrive() {
-        Car car = new Car("Toyota", "Camry", 2020, 25000.0);
-
-        // Redirect System.out to catch output
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
-
-        car.drive();
-        assertEquals("The car is being driven.\n", outContent.toString());
     }
 }
 

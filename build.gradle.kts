@@ -5,11 +5,12 @@ plugins {
 }
 
 group = "org.dasxunya"
-version = "1.0-SNAPSHOT"
+version = "1.15.1-SNAPSHOT"
 
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
-    compileOnly("org.projectlombok:lombok:1.18.30")
+    testCompileOnly("org.projectlombok:lombok:1.18.30")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
 }
 
 repositories {

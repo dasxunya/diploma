@@ -1,4 +1,4 @@
-package org.dasxunya.diploma.Generator;
+package org.dasxunya.diploma.generator;
 
 import com.intellij.psi.*;
 
