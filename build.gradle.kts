@@ -9,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+    compileOnly("org.projectlombok:lombok:1.18.30")
 }
 
 repositories {
@@ -49,3 +50,17 @@ tasks {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
 }
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+sourceSets {
+    test {
+
+        java.srcDirs("src/test/java")
+
+        //resources.srcDirs("src/test/resources")
+    }
+}
+

@@ -4,6 +4,9 @@ import com.intellij.psi.*;
 
 import java.util.StringJoiner;
 
+/**
+ * Генератор юнит тестов для классов и методов
+ */
 public class UnitTestsGenerator {
 
     private final StringBuilder stringBuilder;
@@ -12,27 +15,27 @@ public class UnitTestsGenerator {
         this.stringBuilder = new StringBuilder();
     }
 
-    private String Capitalize(String str) {
+    private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;
         }
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
-    public String Generate(PsiElement element) {
+    public String generate(PsiElement element) {
         // Элемент является классом
         if (element instanceof PsiClass) {
-            return Generate((PsiClass) element);
+            return generate((PsiClass) element);
         }
         // Элемент является методом
         if (element instanceof PsiMethod) {
-            return Generate((PsiMethod) element);
+            return generate((PsiMethod) element);
         }
         // Элемент не является ни классом, ни методом
         throw new IllegalArgumentException("Неподдерживаемый тип элемента: " + element.getClass().getName());
     }
 
-    public String Generate(PsiMethod psiMethod) {
+    public String generate(PsiMethod psiMethod) {
         stringBuilder.setLength(0);
         if (psiMethod == null)
             throw new IllegalArgumentException("Передана пустая ссылка на PsiMethod");
@@ -44,7 +47,7 @@ public class UnitTestsGenerator {
         String methodName = psiMethod.getName();
         PsiType returnType = psiMethod.getReturnType();
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-        String testMethodName = "test" + Capitalize(methodName);
+        String testMethodName = "test" + capitalize(methodName);
         StringJoiner parameterList = new StringJoiner(", ");
         for (PsiParameter parameter : parameters) {
             String type = parameter.getType().getPresentableText();
@@ -64,11 +67,11 @@ public class UnitTestsGenerator {
         return stringBuilder.toString();
     }
 
-    public String Generate(PsiClass psiClass) {
+    public String generate(PsiClass psiClass) {
         stringBuilder.setLength(0);
         System.out.println("Методы класса:");
         for (PsiMethod method : psiClass.getAllMethods())
-            stringBuilder.append(this.Generate(method));
+            stringBuilder.append(this.generate(method));
         return stringBuilder.toString();
     }
 

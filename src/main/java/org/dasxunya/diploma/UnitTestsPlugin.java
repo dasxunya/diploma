@@ -7,17 +7,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 //нужен для генерации структуры файлов в тестах
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.dasxunya.diploma.Generator.UnitTestsGenerator;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.StringJoiner;
 
 
 /**
@@ -89,7 +84,7 @@ public class UnitTestsPlugin extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
         try {
-            String unitTestStr = this.generator.Generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT));
+            String unitTestStr = this.generator.generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT));
             println(unitTestStr);
         } catch (Exception ex) {
             showMessage(anActionEvent.getProject(), ex.getMessage());
