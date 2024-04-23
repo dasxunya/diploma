@@ -2,6 +2,11 @@ package org.dasxunya.diploma.generator.expectedTests;
 
 import org.dasxunya.diploma.generator.sampleTestClasses.Car;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -38,6 +43,18 @@ public class TestCar {
         String expectedInfo = "Brand: Toyota, Model: Camry, Year: 2020, Price: $25000.0";
 
         assertEquals(expectedInfo, car.getCarInfo());
+    }
+
+    @ParameterizedTest
+    @MethodSource("testSourceMethod")
+    void parameterizedTest(String brand, String model, int year, double price) {
+        System.out.println(brand + model + year + price);
+        assertEquals(brand, "string");
+    }
+
+    static Stream<Arguments> testSourceMethod() {
+        return Stream.of(Arguments.of("string", "string", 14, 25.0),
+                Arguments.of("string", "string", 14, 25.0));
     }
 }
 

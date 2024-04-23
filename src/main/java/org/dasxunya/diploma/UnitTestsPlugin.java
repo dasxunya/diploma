@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.dasxunya.diploma.generator.TestType;
 import org.dasxunya.diploma.generator.UnitTestsGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +85,7 @@ public class UnitTestsPlugin extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
         try {
-            String unitTestStr = this.generator.generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT));
+            String unitTestStr = this.generator.generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT), TestType.UNIT);
             println(unitTestStr);
         } catch (Exception ex) {
             showMessage(anActionEvent.getProject(), ex.getMessage());
