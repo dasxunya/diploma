@@ -43,6 +43,9 @@ public class UnitTestGeneratorTests {
         MockitoAnnotations.openMocks(this);
         generator = new UnitTestsGenerator();
 
+        when(mockPsiClass.getName()).thenReturn("CarName");
+        when(mockPsiClass.getQualifiedName()).thenReturn("CarQualifiedName");
+
         when(mockPsiMethod.getParameterList()).thenReturn(mockPsiParameterList);
         when(mockPsiParameterList.getParameters()).thenReturn(new PsiParameter[]{
                 mockPsiParameter, mockPsiParameter, mockPsiParameter, mockPsiParameter

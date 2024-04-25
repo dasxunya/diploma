@@ -1,7 +1,11 @@
 package org.dasxunya.diploma.generator;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
+import java.util.ArrayList;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -10,8 +14,6 @@ import java.util.StringJoiner;
 public class UnitTestsGenerator {
 
     //region Поля
-    private final StringBuilder stringBuilder;
-
     private boolean isDebug;
     //endregion
 
@@ -27,12 +29,10 @@ public class UnitTestsGenerator {
 
     //region Конструкторы
     public UnitTestsGenerator() {
-        this.stringBuilder = new StringBuilder();
         this.setDebug(false);
     }
 
     public UnitTestsGenerator(boolean isDebug) {
-        this.stringBuilder = new StringBuilder();
         this.setDebug(isDebug);
     }
     //endregion
@@ -59,16 +59,47 @@ public class UnitTestsGenerator {
     }
 
     public String generate(PsiClass psiClass, TestType testType) {
-        stringBuilder.setLength(0);
+        StringBuilder stringBuilder = new StringBuilder();
+        //region Список добавляемых библиотек и сборок
+        ArrayList<String> imports = new ArrayList<>();
+        // Получение имени пакета класса
+        PsiFile psiFile = psiClass.getContainingFile();
+        PsiDirectory psiDirectory = psiFile.getContainingDirectory();
+        PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+        if (psiPackage == null)
+            throw new NullPointerException("Не удалось получить пакет, которому принадлежит класс");
+        // Импорт пакета
+        stringBuilder.append(String.format("package %s;\n", psiPackage.getQualifiedName()));
+        // Добавление библиотек
+        imports.add("org.junit.jupiter.api.Test");
+        if (testType == TestType.PARAMETERIZED) {
+            imports.add("org.junit.jupiter.params.ParameterizedTest");
+            imports.add("org.junit.jupiter.params.provider.Arguments");
+            imports.add("org.junit.jupiter.params.provider.MethodSource");
+        }
+        //endregion
+        //region Добавление бибилотек в код тестирующего класса
+        for (String importStr : imports)
+            stringBuilder.append(String.format("import %s;\n", importStr));
+        //endregion
+        //region Формирование имени класса
+        stringBuilder.append(String.format("class %sTests", psiClass.getName()));
+        //endregion
+        //region Формирование тела тестирующего класса
+        stringBuilder.append("{");
+        stringBuilder.append("\n");
         if (this.isDebug)
-            stringBuilder.append("Методы класса:");
-        for (PsiMethod method : psiClass.getAllMethods())
+            stringBuilder.append("Методы класса:\n");
+        for (PsiMethod method : psiClass.getMethods())
             stringBuilder.append(this.generate(method, testType));
+        stringBuilder.append("}");
+        stringBuilder.append("\n");
+        //endregion
         return stringBuilder.toString();
     }
 
     public String generate(PsiMethod psiMethod, TestType testType) {
-        stringBuilder.setLength(0);
+        StringBuilder stringBuilder = new StringBuilder();
         if (psiMethod == null)
             throw new IllegalArgumentException("Передана пустая ссылка на PsiMethod");
         if (this.isDebug) {
@@ -105,6 +136,23 @@ public class UnitTestsGenerator {
         String result = stringBuilder.toString();
         stringBuilder.setLength(0);
         return result;
+    }
+
+    public void generate(Project project, PsiElement element, PsiDirectory directory, TestType testType) {
+        if (directory == null) {
+            System.out.println("PsiDirectory is null");
+            return;
+        }
+
+        // Генерация содержимого файла в зависимости от типа теста
+        String fileContent = this.generate(element, testType);
+        String fileName = "TestClass1.java";//generateFileName(testType);
+
+        // Создание PsiFile
+        PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileContent);
+
+        // Добавление файла в директорию
+        directory.add(file);
     }
     //endregion
 
