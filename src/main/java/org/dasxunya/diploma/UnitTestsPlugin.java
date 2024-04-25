@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 //нужен для генерации структуры файлов в тестах
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.dasxunya.diploma.generator.TestType;
 import org.dasxunya.diploma.generator.UnitTestsGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,8 +86,18 @@ public class UnitTestsPlugin extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
         try {
-            String unitTestStr = this.generator.generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT));
-            println(unitTestStr);
+            Project project = anActionEvent.getProject();
+            PsiElement psiElement = anActionEvent.getData(CommonDataKeys.PSI_ELEMENT);
+            if (psiElement == null || project == null) {
+                return; // Early exit if no project or element
+            }
+            PsiDirectory psiDirectory = psiElement.getContainingFile().getContainingDirectory();
+            if (psiDirectory == null) {
+                throw new NullPointerException();
+            }
+            this.generator.generate(project, psiElement, psiDirectory, TestType.UNIT);
+            //String unitTestStr = this.generator.generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT), TestType.UNIT);
+            //println(unitTestStr);
         } catch (Exception ex) {
             showMessage(anActionEvent.getProject(), ex.getMessage());
         }

@@ -11,6 +11,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
     testCompileOnly("org.projectlombok:lombok:1.18.30")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
+    testImplementation("org.mockito:mockito-core:4.5.1")
 }
 
 repositories {
