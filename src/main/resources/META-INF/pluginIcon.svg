@@ -1,12 +1,21 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M32.0845 7.94025V4H24.0203V7.9896H16.029V4H7.91553V7.94025H4V36H16.0044V32.0045C16.0058 30.9457 16.4274 29.9308 17.1766 29.1826C17.9258 28.4345 18.9412 28.0143 20 28.0143C21.0588 28.0143 22.0743 28.4345 22.8234 29.1826C23.5726 29.9308 23.9942 30.9457 23.9956 32.0045V36H36V7.94025H32.0845Z"
-          fill="url(#paint0_linear)"/>
-    <defs>
-        <linearGradient id="paint0_linear" x1="2.94192" y1="4.89955" x2="37.7772" y2="39.7345"
-                        gradientUnits="userSpaceOnUse">
-            <stop offset="0.15937" stop-color="#3BEA62"/>
-            <stop offset="0.5404" stop-color="#3C99CC"/>
-            <stop offset="0.93739" stop-color="#6B57FF"/>
-        </linearGradient>
-    </defs>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     viewBox="0 0 497.7 497.7" style="enable-background:new 0 0 497.7 497.7;" xml:space="preserve">
+<circle style="fill:#BC628B;" cx="248.85" cy="248.8" r="248.8"/>
+    <path style="fill:#AA507D;" d="M424.85,72.8c96.8,97.6,96.8,254.4,0,352s-254.4,96.8-352,0"/>
+    <polygon style="fill:#FFF69F;" points="486.45,362.4 248.85,494.4 11.25,362.4 19.25,128 248.85,3.2 478.45,128 "/>
+    <polygon style="fill:#FFEE1A;" points="486.45,362.4 248.85,494.4 11.25,362.4 19.25,128 248.85,176 478.45,128 "/>
+    <g>
+	<polyline style="fill:#EACE00;" points="248.85,3.2 478.45,128 486.45,362.4 248.85,494.4 	"/>
+
+        <rect x="188.604" y="272.77" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 647.0327 411.929)" style="fill:#EACE00;" width="99.199" height="134.399"/>
+</g>
+    <path style="fill:#5E6664;" d="M172.05,187.2c0,12-11.2,21.6-24.8,21.6s-24.8-9.6-24.8-21.6s11.2-21.6,24.8-21.6
+	C160.85,164.8,172.05,175.2,172.05,187.2z"/>
+    <path style="fill:#2F423F;" d="M164.85,171.2c9.6,8.8,9.6,22.4,0,31.2s-24.8,8.8-34.4,0"/>
+    <path style="fill:#5E6664;" d="M375.25,187.2c0,12-11.2,21.6-24.8,21.6s-24.8-9.6-24.8-21.6s11.2-21.6,24.8-21.6
+	S375.25,175.2,375.25,187.2z"/>
+    <path style="fill:#2F423F;" d="M368.05,171.2c9.6,8.8,9.6,22.4,0,31.2s-24.8,8.8-34.4,0"/>
+    <polygon style="fill:#E07F00;" points="384.05,313.6 248.85,358.4 113.65,313.6 128.05,274.4 248.85,284 369.65,274.4 "/>
+    <polygon style="fill:#FF9700;" points="81.65,268 248.85,239.2 416.05,268 389.65,319.2 248.85,308.8 108.05,319.2 "/>
 </svg>

@@ -1,16 +1,18 @@
 package org.dasxunya.diploma.generator;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import lombok.Getter;
+import org.dasxunya.diploma.constants.Constants;
+import org.dasxunya.diploma.constants.TestType;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
  * Генератор юнит тестов для классов и методов
  */
+@Getter
 public class UnitTestsGenerator {
 
     //region Поля
@@ -18,10 +20,6 @@ public class UnitTestsGenerator {
     //endregion
 
     //region Сеттеры/Геттеры
-    public boolean isDebug() {
-        return isDebug;
-    }
-
     public void setDebug(boolean debug) {
         isDebug = debug;
     }
@@ -38,6 +36,35 @@ public class UnitTestsGenerator {
     //endregion
 
     //region Методы
+
+    //region Вывод ошибок и отладочной инофрмации
+    private void print(String message) {
+        System.out.print(message);
+    }
+
+    private void printLn(String message) {
+        System.out.println(message);
+    }
+
+    private <T> void throwNullPointerException(Class<T> type) throws NullPointerException {
+        if (this.isDebug)
+            this.printLn(Constants.Strings.Debug.Errors.NULL_POINTER + type.getSimpleName());
+        throw new NullPointerException(Constants.Strings.Release.Errors.NULL_POINTER);
+    }
+
+    private <T> void throwIllegalArgumentException(Class<T> type) throws IllegalArgumentException {
+        if (this.isDebug)
+            this.printLn(Constants.Strings.Debug.Errors.ILLEGAL_ARGUMENT + type.getSimpleName());
+        throw new IllegalArgumentException(Constants.Strings.Release.Errors.ILLEGAL_ARGUMENT);
+    }
+
+    private void throwException(String messageRelease, String messageDebug) throws Exception {
+        if (this.isDebug && messageDebug != null && !messageDebug.isEmpty())
+            this.printLn(messageDebug);
+        throw new Exception(messageRelease);
+    }
+    //endregion
+
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;
@@ -45,20 +72,16 @@ public class UnitTestsGenerator {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
-    public String generate(PsiElement element, TestType testType) {
-        // Элемент является классом
-        if (element instanceof PsiClass) {
-            return generate((PsiClass) element, testType);
-        }
-        // Элемент является методом
-        if (element instanceof PsiMethod) {
-            return generate((PsiMethod) element, testType);
-        }
-        // Элемент не является ни классом, ни методом
-        throw new IllegalArgumentException("Неподдерживаемый тип элемента: " + element.getClass().getName());
+    // Метод для генерации тестового класса для всех методов в классе
+    public String generate(PsiClass psiClass, TestType testType) {
+        return generate(psiClass, null, testType); // null означает все методы
     }
 
-    public String generate(PsiClass psiClass, TestType testType) {
+    //TODO: посмотреть
+    // Перегруженный метод для генерации тестового класса для одного конкретного метода
+    public String generate(PsiClass psiClass, PsiMethod psiMethod, TestType testType) {
+        if (psiClass == null)
+            this.throwNullPointerException(PsiClass.class);
         StringBuilder stringBuilder = new StringBuilder();
         //region Список добавляемых библиотек и сборок
         ArrayList<String> imports = new ArrayList<>();
@@ -89,9 +112,13 @@ public class UnitTestsGenerator {
         stringBuilder.append("{");
         stringBuilder.append("\n");
         if (this.isDebug)
-            stringBuilder.append("Методы класса:\n");
-        for (PsiMethod method : psiClass.getMethods())
-            stringBuilder.append(this.generate(method, testType));
+            stringBuilder.append("// Методы класса:\n");
+        if (psiMethod != null) {
+            stringBuilder.append(this.generate(psiMethod, testType));
+        } else {
+            for (PsiMethod method : psiClass.getMethods())
+                stringBuilder.append(this.generate(method, testType));
+        }
         stringBuilder.append("}");
         stringBuilder.append("\n");
         //endregion
@@ -99,31 +126,58 @@ public class UnitTestsGenerator {
     }
 
     public String generate(PsiMethod psiMethod, TestType testType) {
+        if (psiMethod == null)
+            this.throwNullPointerException(PsiMethod.class);
         StringBuilder stringBuilder = new StringBuilder();
         if (psiMethod == null)
             throw new IllegalArgumentException("Передана пустая ссылка на PsiMethod");
         if (this.isDebug) {
-            stringBuilder.append("Метод: ").append(psiMethod.getName());
-            stringBuilder.append("Сигнатура: ").append(psiMethod.getSignature(PsiSubstitutor.EMPTY));
-            stringBuilder.append("Юнит тест: \n");
+            stringBuilder.append("// Метод: ").append(psiMethod.getName());
+            stringBuilder.append("\n");
+            stringBuilder.append("// Сигнатура: ").append(psiMethod.getSignature(PsiSubstitutor.EMPTY));
+            stringBuilder.append("\n");
+            stringBuilder.append("// Юнит тест: \n");
         }
+
+        //region Основные свойства метода
+        String methodName = psiMethod.getName();
+        PsiType returnType = psiMethod.getReturnType();
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        String testMethodName = "test" + capitalize(methodName);
+        StringJoiner parameterTypes = new StringJoiner(", ");
+        StringJoiner parameterNames = new StringJoiner(", ");
+        StringJoiner parameterList = new StringJoiner(", ");
+        //endregion
+
         if (testType == TestType.PARAMETERIZED) {
+
             //region Генерация тела параметризованного теста
-            stringBuilder.append("Генерация тела параметризованного теста - не реализована");
+            stringBuilder.append("@ParameterizedTest\n");
+            stringBuilder.append("@CsvSource({\n");
+
+            // Добавление тестовых строк данных
+            // Здесь вы можете добавить свои тестовые данные
+            // Пример: "\"testString1\", 1, 2.0", "\"testString2\", 2, 3.0"
+            stringBuilder.append("    \"exampleString1, 100, 200.0\",\n");
+            stringBuilder.append("    \"exampleString2, 101, 201.0\"\n");
+            stringBuilder.append("})\n");
+
+            stringBuilder.append("public void ").append(testMethodName).append("(");
+            stringBuilder.append(parameterTypes.toString());
+            stringBuilder.append(") {\n");
+            stringBuilder.append("    // TODO: Тестируемая логика\n");
+            stringBuilder.append("    // TODO: добавить проверки утверждений с помощью assert\n");
+            stringBuilder.append("}\n");
             //endregion
         } else {
             //region Генерация тела юнит теста
-            String methodName = psiMethod.getName();
-            PsiType returnType = psiMethod.getReturnType();
-            PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-            String testMethodName = "test" + capitalize(methodName);
-            StringJoiner parameterList = new StringJoiner(", ");
+
             for (PsiParameter parameter : parameters) {
-                String paramerType = parameter.getType().getPresentableText();
+                String parameterType = parameter.getType().getPresentableText();
                 String name = parameter.getName();
                 // Здесь мы используем просто имена переменных,
                 // в реальном случае может потребоваться инициализация с дефолтными значениями
-                parameterList.add(paramerType + " " + name);
+                parameterList.add(parameterType + " " + name);
             }
             stringBuilder.append("@Test\n");
             stringBuilder.append("public void ").append(testMethodName).append("() {\n");
@@ -138,7 +192,24 @@ public class UnitTestsGenerator {
         return result;
     }
 
+    public String generate(PsiElement element, TestType testType) {
+        // Элемент является классом
+        if (element instanceof PsiClass) {
+            return generate((PsiClass) element, testType);
+        }
+        // Элемент является методом
+        if (element instanceof PsiMethod) {
+            return generate((PsiMethod) element, testType);
+        }
+        // Элемент не является ни классом, ни методом
+        throw new IllegalArgumentException("Неподдерживаемый тип элемента: " + element.getClass().getName());
+    }
+
     public void generate(Project project, PsiElement element, PsiDirectory directory, TestType testType) {
+        if (!(element instanceof PsiClass) && !(element instanceof PsiMethod))
+            throw new IllegalArgumentException(Constants.Strings.Release.Errors.ILLEGAL_ARGUMENT);
+        //"Плагин поддерживает работу толь"
+
         if (directory == null) {
             System.out.println("PsiDirectory is null");
             return;
@@ -146,7 +217,7 @@ public class UnitTestsGenerator {
 
         // Генерация содержимого файла в зависимости от типа теста
         String fileContent = this.generate(element, testType);
-        String fileName = "TestClass1.java";//generateFileName(testType);
+        String fileName = ((PsiNameIdentifierOwner) element).getName() + "Tests.java";//generateFileName(testType);
 
         // Создание PsiFile
         PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileContent);
@@ -155,5 +226,4 @@ public class UnitTestsGenerator {
         directory.add(file);
     }
     //endregion
-
 }

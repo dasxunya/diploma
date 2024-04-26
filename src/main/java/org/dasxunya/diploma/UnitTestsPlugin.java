@@ -6,13 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-//нужен для генерации структуры файлов в тестах
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.dasxunya.diploma.generator.TestType;
+import com.intellij.psi.PsiMethod;
+import org.dasxunya.diploma.constants.TestType;
 import org.dasxunya.diploma.generator.UnitTestsGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +41,7 @@ public class UnitTestsPlugin extends AnAction {
 
     //region Конструкторы
     public UnitTestsPlugin() {
-        this.generator = new UnitTestsGenerator();
+        this.generator = new UnitTestsGenerator(true);
     }
     //endregion
 
@@ -51,7 +49,7 @@ public class UnitTestsPlugin extends AnAction {
 
     private void showMessage(Project project, String message) {
         Messages.showMessageDialog(project, message,
-                "Info", Messages.getInformationIcon());
+                "Attention!", Messages.getWarningIcon());
     }
 
     //region Отладка
@@ -73,15 +71,6 @@ public class UnitTestsPlugin extends AnAction {
     //endregion
 
     //endregion
-
-    private static PsiMethod findMethod(PsiElement element) {
-        PsiMethod method = (element instanceof PsiMethod) ? (PsiMethod) element :
-                PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        if (method != null && method.getContainingClass() != null) {
-            return findMethod(method.getParent());
-        }
-        return method;
-    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent anActionEvent) {

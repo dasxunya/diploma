@@ -1,9 +1,8 @@
 package org.dasxunya.diploma.generator;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignature;
-import org.dasxunya.diploma.generator.sampleTestClasses.Car;
-import org.junit.jupiter.api.Assertions;
+import org.dasxunya.diploma.constants.Constants;
+import org.dasxunya.diploma.constants.TestType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -41,7 +40,7 @@ public class UnitTestGeneratorTests {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        generator = new UnitTestsGenerator();
+        generator = new UnitTestsGenerator(true);
 
         when(mockPsiClass.getName()).thenReturn("CarName");
         when(mockPsiClass.getQualifiedName()).thenReturn("CarQualifiedName");
@@ -65,6 +64,48 @@ public class UnitTestGeneratorTests {
     }
 
     //region Тесты
+
+    //region Генерация тестов для методов
+    @SuppressWarnings("ConstantValue")
+    @Test
+    void testGenerate_NullMethod() {
+        Exception exception = assertThrows(NullPointerException.class, () -> {
+            PsiMethod testMethod = null;
+            generator.generate(testMethod, TestType.UNIT);
+        });
+        // Проверяем, что сообщение исключения соответствует ожидаемому
+        assertEquals(Constants.Strings.Release.Errors.NULL_POINTER, exception.getMessage());
+    }
+
+
+    @Test
+    void testGenerateMethod_ParameterizedTest() {
+        this.generator.setDebug(false);
+        String parameterizedTestStr = generator.generate(mockPsiMethod, TestType.PARAMETERIZED);
+        System.out.println(parameterizedTestStr);
+    }
+    //endregion
+
+    //region Генерация тестов для классов
+    @SuppressWarnings("ConstantValue")
+    @Test
+    void testGenerate_NullClass() {
+        Exception exception = assertThrows(NullPointerException.class, () -> {
+            PsiClass testClass = null;
+            generator.generate(testClass, TestType.UNIT);
+        });
+        // Проверяем, что сообщение исключения соответствует ожидаемому
+        assertEquals(Constants.Strings.Release.Errors.NULL_POINTER, exception.getMessage());
+    }
+
+    @Test
+    void testGenerateClass_SpecificMethod_ParameterizedTest() {
+        this.generator.setDebug(false);
+        String parameterizedTestStr = generator.generate(mockPsiClass, mockPsiMethod, TestType.PARAMETERIZED);
+        System.out.println(parameterizedTestStr);
+    }
+    //endregion
+
     @Test
     void testGenerateWithPsiClass() {
         // Подготовка
