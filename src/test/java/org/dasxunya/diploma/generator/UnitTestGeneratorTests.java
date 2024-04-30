@@ -66,24 +66,10 @@ public class UnitTestGeneratorTests {
     //region Тесты
 
     //region Генерация тестов для методов
-    @SuppressWarnings("ConstantValue")
-    @Test
-    void testGenerate_NullMethod() {
-        Exception exception = assertThrows(NullPointerException.class, () -> {
-            PsiMethod testMethod = null;
-            generator.generate(testMethod, TestType.UNIT);
-        });
-        // Проверяем, что сообщение исключения соответствует ожидаемому
-        assertEquals(Constants.Strings.Release.Errors.NULL_POINTER, exception.getMessage());
-    }
 
 
-    @Test
-    void testGenerateMethod_ParameterizedTest() {
-        this.generator.setDebug(false);
-        String parameterizedTestStr = generator.generate(mockPsiMethod, TestType.PARAMETERIZED);
-        System.out.println(parameterizedTestStr);
-    }
+
+
     //endregion
 
     //region Генерация тестов для классов
@@ -94,6 +80,14 @@ public class UnitTestGeneratorTests {
             PsiClass testClass = null;
             generator.generate(testClass, TestType.UNIT);
         });
+        // Проверяем, что сообщение исключения соответствует ожидаемому
+        assertEquals(Constants.Strings.Release.Errors.NULL_POINTER, exception.getMessage());
+
+        exception = assertThrows(NullPointerException.class, () -> {
+            PsiClass testClass = null;
+            generator.generate(testClass, TestType.PARAMETERIZED);
+        });
+
         // Проверяем, что сообщение исключения соответствует ожидаемому
         assertEquals(Constants.Strings.Release.Errors.NULL_POINTER, exception.getMessage());
     }

@@ -2,7 +2,7 @@ package org.dasxunya.diploma.generator;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import lombok.Getter;
+//import lombok.Getter;
 import org.dasxunya.diploma.constants.Constants;
 import org.dasxunya.diploma.constants.TestType;
 
@@ -12,7 +12,7 @@ import java.util.StringJoiner;
 /**
  * Генератор юнит тестов для классов и методов
  */
-@Getter
+//@Getter
 public class UnitTestsGenerator {
 
     //region Поля
@@ -72,12 +72,45 @@ public class UnitTestsGenerator {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
+    @SuppressWarnings({"StringBufferReplaceableByString", "DataFlowIssue"})
+    public String getInfo(PsiMethod psiMethod) throws NullPointerException {
+        //region Проверка ссылки на объект
+        if (psiMethod == null)
+            this.throwNullPointerException(PsiMethod.class);
+        //endregion
+        StringBuilder info = new StringBuilder();
+        info.append("Название: ").append(psiMethod.getName()).append("\n");
+        //region Возвращаемый тип
+        PsiType returnType = psiMethod.getReturnType();
+        String returnTypeName = (returnType != null) ? returnType.getPresentableText() : "void";
+        info.append("Возвращаемый тип: ").append(returnTypeName).append("\n");
+        //endregion
+        info.append("Сигнатура: ").append(psiMethod.getSignature(PsiSubstitutor.EMPTY)).append("\n");
+        //region Получение и вывод параметров метода
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        if (parameters.length == 0) {
+            info.append("Параметры: Нет параметров");
+        } else {
+            info.append("Параметры: ");
+            StringBuilder parametersInfo = new StringBuilder();
+            for (int i = 0; i < parameters.length; i++) {
+                PsiParameter parameter = parameters[i];
+                String typeName = parameter.getType().getPresentableText(); // Получаем текстовое представление типа параметра
+                String parameterName = parameter.getName(); // Получаем имя параметра
+                if (i > 0) parametersInfo.append(", "); // Добавляем запятую между параметрами
+                parametersInfo.append(typeName).append(" ").append(parameterName);
+            }
+            info.append(parametersInfo.toString());
+        }
+        //endregion
+        return info.toString();
+    }
+
     // Метод для генерации тестового класса для всех методов в классе
     public String generate(PsiClass psiClass, TestType testType) {
         return generate(psiClass, null, testType); // null означает все методы
     }
 
-    //TODO: посмотреть
     // Перегруженный метод для генерации тестового класса для одного конкретного метода
     public String generate(PsiClass psiClass, PsiMethod psiMethod, TestType testType) {
         if (psiClass == null)
@@ -125,19 +158,17 @@ public class UnitTestsGenerator {
         return stringBuilder.toString();
     }
 
+    @SuppressWarnings("DataFlowIssue")
     public String generate(PsiMethod psiMethod, TestType testType) {
+        //region Проверка ссылки на объект
         if (psiMethod == null)
             this.throwNullPointerException(PsiMethod.class);
+        //endregion
         StringBuilder stringBuilder = new StringBuilder();
-        if (psiMethod == null)
-            throw new IllegalArgumentException("Передана пустая ссылка на PsiMethod");
-        if (this.isDebug) {
-            stringBuilder.append("// Метод: ").append(psiMethod.getName());
-            stringBuilder.append("\n");
-            stringBuilder.append("// Сигнатура: ").append(psiMethod.getSignature(PsiSubstitutor.EMPTY));
-            stringBuilder.append("\n");
-            stringBuilder.append("// Юнит тест: \n");
-        }
+        //region Вывод отладной информации о методе
+        if (this.isDebug)
+            this.printLn(this.getInfo(psiMethod));
+        //endregion
 
         //region Основные свойства метода
         String methodName = psiMethod.getName();
