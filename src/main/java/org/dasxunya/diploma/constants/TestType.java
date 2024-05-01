@@ -1,4 +1,4 @@
-package org.dasxunya.diploma.generator;
+package org.dasxunya.diploma.constants;
 
 public enum TestType {
     UNIT,
