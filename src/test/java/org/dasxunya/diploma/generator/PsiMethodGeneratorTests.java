@@ -1,5 +1,8 @@
 package org.dasxunya.diploma.generator;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import org.dasxunya.diploma.constants.Constants;
@@ -20,16 +23,23 @@ import java.util.StringJoiner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PsiMethodGeneratorTests {
 
 
     //region Поля
     UnitTestsGenerator generator;
+    //region Макеты Psi элементов
     @Mock
     private PsiClass mockPsiClass;
+    @Mock
+    private PsiFile mockPsiFile;
+    @Mock
+    private PsiDirectory mockPsiDirectory;
+    @Mock
+    private PsiPackage mockPsiPackage;
+    //endregion
 
     //region Макеты для методов
     /**
@@ -54,6 +64,8 @@ public class PsiMethodGeneratorTests {
     private PsiMethod mockNoParamMethod;
     //endregion
     @Mock
+    private JavaDirectoryService mockJavaDirectoryService;
+    @Mock
     private MethodSignature mockConstructorMethodSignature, mockPsiVoidMethodSignature, mockReturnMethodSignature;
     @Mock
     private PsiParameterList mockConstructorParameterList, mockVoidParameterList, mockReturnParameterList;
@@ -67,8 +79,6 @@ public class PsiMethodGeneratorTests {
     private PsiParameter mockPsiParameterInt, mockPsiParameterDouble, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar,
             mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterString;
     //endregion
-
-
     //endregion
 
     //region Вспомогательные методы
@@ -84,6 +94,26 @@ public class PsiMethodGeneratorTests {
             System.out.println("Test file was successfully saved: " + path);
         } catch (IOException e) {
             System.err.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Удаляет файл по указанному пути.
+     *
+     * @param basePath базовый путь к директории файла
+     * @param fileName имя файла для удаления
+     */
+    public void deleteFile(String basePath, String fileName) {
+        Path path = Paths.get(basePath, fileName + ".java");
+        try {
+            if (Files.exists(path)) {  // Проверка существования файла
+                Files.delete(path);    // Удаление файла
+                System.out.println("File was successfully deleted: " + path);
+            } else {
+                System.out.println("File does not exist, no need to delete: " + path);
+            }
+        } catch (IOException e) {
+            System.err.println("Error deleting file: " + e.getMessage());
         }
     }
 
@@ -260,23 +290,44 @@ public class PsiMethodGeneratorTests {
         mockNoParamMethod = createPsiMethod(mockPsiTypeString, "noParamMethod", null);
     }
 
+    @SuppressWarnings("resource")
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         generator = new UnitTestsGenerator(true);
 
-        // Класс и конструктор
+        //region Настройка приложения для JavaDirectoryService
+        Application mockApplication = mock(Application.class);
+        mockStatic(ApplicationManager.class);
+        when(ApplicationManager.getApplication()).thenReturn(mockApplication);
+        when(mockApplication.getService(JavaDirectoryService.class)).thenReturn(mockJavaDirectoryService);
+        //endregion
+        //region Настройка моков для PsiClass
         when(mockPsiClass.getName()).thenReturn("Car");
-        when(mockPsiClass.getQualifiedName()).thenReturn("com.example.Car");
-
+        when(mockPsiClass.getContainingFile()).thenReturn(mockPsiFile);
+        //endregion
+        //region Настройка моков для PsiFile
+        when(mockPsiFile.getContainingDirectory()).thenReturn(mockPsiDirectory);
+        //endregion
+        //region Подмена статического метода для получения экземпляра JavaDirectoryService
+        // Предполагается, что JavaDirectoryService можно мокировать или подменять другим способом, например, через PowerMock
+        JavaDirectoryService instance = JavaDirectoryService.getInstance();
+        when(instance.getPackage(mockPsiDirectory)).thenReturn(mockPsiPackage);
+        //endregion
+        //region Настройка моков для PsiPackage
+        when(mockPsiPackage.getQualifiedName()).thenReturn("com.example.package");
+        //endregion
+        //region Настройка параметров
         setupPrimitiveParameters();
-        // Настройка для конструктора
+        //endregion
+        //region Настройка для конструктора
         setUpConstructor();
-
-        // Настройка для других методов
+        //endregion
+        //region Настройка для других методов
         setupVoidMethod();
         setupReturnMethod();
         setupNoParamMethod();
+        //endregion
     }
     //endregion
 
@@ -336,6 +387,12 @@ public class PsiMethodGeneratorTests {
     }
 
     @Test
+    void testGetClassHeader() {
+        String psiClassHeader = this.generator.getClassHeader(this.mockPsiClass, TestType.PARAMETERIZED);
+        System.out.println(psiClassHeader);
+    }
+
+    @Test
     void testGenerateMethod_UnitTest() {
         this.generator.setDebug(true);
         String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
@@ -349,19 +406,31 @@ public class PsiMethodGeneratorTests {
         String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
         System.out.println(methodImplementationStr);
         System.out.println(parameterizedTestStr);
-        //TODO: добавить импорты, обернуть в класс как в файле Образец_теста
 
+        StringBuilder stringBuilder = new StringBuilder();
+
+        //TODO: добавить импорты, обернуть в класс как в файле Образец_теста
+//        PsiFile psiFile = mockVoidMethod.getContainingFile();
+//        PsiDirectory psiDirectory = psiFile.getContainingDirectory();
+//
+//        VirtualFile virtualFile = psiDirectory.getVirtualFile();
+//        String packagePath = virtualFile.getPath();
+//
+//        System.out.println(packagePath);
+        stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
         // Абсолютный путь до папки
         String basePath = "src\\test\\java\\org\\dasxunya\\diploma\\generator\\actualTests";
         String fileName = "Parameterized" + mockVoidMethod.getName(); // Например, ParameterizedVoidMethod
 
         // Сохранение содержимого в файл
-        StringBuilder stringBuilder = new StringBuilder();
+
         stringBuilder.append(methodImplementationStr).append("\n");
 
         stringBuilder.append(methodImplementationStr).append("\n");
         stringBuilder.append(parameterizedTestStr).append("\n");
         saveTestToFile(parameterizedTestStr, basePath, fileName);
+        //TODO: добавить проверки сгенерированного теста
+        //deleteFile(basePath, fileName);
     }
     //endregion
 }

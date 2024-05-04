@@ -47,20 +47,17 @@ public class UnitTestsGenerator {
     }
 
     private <T> void throwNullPointerException(Class<T> type) throws NullPointerException {
-        if (this.isDebug)
-            this.printLn(Constants.Strings.Debug.Errors.NULL_POINTER + type.getSimpleName());
+        if (this.isDebug) this.printLn(Constants.Strings.Debug.Errors.NULL_POINTER + type.getSimpleName());
         throw new NullPointerException(Constants.Strings.Release.Errors.NULL_POINTER);
     }
 
     private <T> void throwIllegalArgumentException(Class<T> type) throws IllegalArgumentException {
-        if (this.isDebug)
-            this.printLn(Constants.Strings.Debug.Errors.ILLEGAL_ARGUMENT + type.getSimpleName());
+        if (this.isDebug) this.printLn(Constants.Strings.Debug.Errors.ILLEGAL_ARGUMENT + type.getSimpleName());
         throw new IllegalArgumentException(Constants.Strings.Release.Errors.ILLEGAL_ARGUMENT);
     }
 
     private void throwException(String messageRelease, String messageDebug) throws Exception {
-        if (this.isDebug && messageDebug != null && !messageDebug.isEmpty())
-            this.printLn(messageDebug);
+        if (this.isDebug && messageDebug != null && !messageDebug.isEmpty()) this.printLn(messageDebug);
         throw new Exception(messageRelease);
     }
     //endregion
@@ -100,8 +97,7 @@ public class UnitTestsGenerator {
 
 
     private String generateMethodAssert(PsiMethod psiMethod) throws NullPointerException {
-        if (psiMethod == null)
-            throwNullPointerException(PsiMethod.class);
+        if (psiMethod == null) throwNullPointerException(PsiMethod.class);
         StringBuilder stringBuilder = new StringBuilder();
 
         //region Получение данных метода
@@ -153,8 +149,7 @@ public class UnitTestsGenerator {
     @SuppressWarnings({"StringBufferReplaceableByString", "DataFlowIssue"})
     public String getInfo(PsiMethod psiMethod) throws NullPointerException {
         //region Проверка ссылки на объект
-        if (psiMethod == null)
-            this.throwNullPointerException(PsiMethod.class);
+        if (psiMethod == null) this.throwNullPointerException(PsiMethod.class);
         //endregion
         StringBuilder info = new StringBuilder();
         info.append("Название: ").append(psiMethod.getName()).append("\n");
@@ -184,16 +179,14 @@ public class UnitTestsGenerator {
         return info.toString();
     }
 
-
-    // Метод для генерации тестового класса для всех методов в классе
-    public String generate(PsiClass psiClass, TestType testType) {
-        return generate(psiClass, null, testType); // null означает все методы
-    }
-
-    // Перегруженный метод для генерации тестового класса для одного конкретного метода
-    public String generate(PsiClass psiClass, PsiMethod psiMethod, TestType testType) {
-        if (psiClass == null)
-            this.throwNullPointerException(PsiClass.class);
+    /**
+     * Возвращает строку, представляющую собой пустой тестирующий класс
+     *
+     * @param psiClass
+     * @return
+     */
+    public String getClassHeader(PsiClass psiClass, TestType testType) {
+        if (psiClass == null) this.throwNullPointerException(PsiClass.class);
         StringBuilder stringBuilder = new StringBuilder();
         //region Список добавляемых библиотек и сборок
         ArrayList<String> imports = new ArrayList<>();
@@ -201,8 +194,7 @@ public class UnitTestsGenerator {
         PsiFile psiFile = psiClass.getContainingFile();
         PsiDirectory psiDirectory = psiFile.getContainingDirectory();
         PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-        if (psiPackage == null)
-            throw new NullPointerException("Не удалось получить пакет, которому принадлежит класс");
+        if (psiPackage == null) throw new NullPointerException("Не удалось получить пакет, которому принадлежит класс");
         // Импорт пакета
         stringBuilder.append(String.format("package %s;\n", psiPackage.getQualifiedName()));
         // Добавление библиотек
@@ -220,11 +212,25 @@ public class UnitTestsGenerator {
         //region Формирование имени класса
         stringBuilder.append(String.format("class %sTests", psiClass.getName()));
         //endregion
+        return stringBuilder.toString();
+    }
+
+    // Метод для генерации тестового класса для всех методов в классе
+    public String generate(PsiClass psiClass, TestType testType) {
+        return generate(psiClass, null, testType); // null означает все методы
+    }
+
+    // Перегруженный метод для генерации тестового класса для одного конкретного метода
+    public String generate(PsiClass psiClass, PsiMethod psiMethod, TestType testType) {
+        if (psiClass == null) this.throwNullPointerException(PsiClass.class);
+        StringBuilder stringBuilder = new StringBuilder();
+        //region Формирование заголовкка класса с импортами
+        stringBuilder.append(this.getClassHeader(psiClass, testType));
+        //endregion
         //region Формирование тела тестирующего класса
         stringBuilder.append("{");
         stringBuilder.append("\n");
-        if (this.isDebug)
-            stringBuilder.append("// Методы класса:\n");
+        if (this.isDebug) stringBuilder.append("// Методы класса:\n");
         if (psiMethod != null) {
             stringBuilder.append(this.generate(psiMethod, testType));
         } else {
@@ -240,13 +246,11 @@ public class UnitTestsGenerator {
     @SuppressWarnings("DataFlowIssue")
     public String generate(PsiMethod psiMethod, TestType testType) {
         //region Проверка ссылки на объект
-        if (psiMethod == null)
-            this.throwNullPointerException(PsiMethod.class);
+        if (psiMethod == null) this.throwNullPointerException(PsiMethod.class);
         //endregion
         StringBuilder stringBuilder = new StringBuilder();
         //region Вывод отладной информации о методе
-        if (this.isDebug)
-            this.printLn(this.getInfo(psiMethod));
+        if (this.isDebug) this.printLn(this.getInfo(psiMethod));
         //endregion
 
         //region Основные свойства метода
