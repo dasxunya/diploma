@@ -4,7 +4,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import org.dasxunya.diploma.constants.Constants;
 import org.dasxunya.diploma.constants.TestType;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +11,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.io.IOException;
+import java.util.StringJoiner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -68,6 +73,20 @@ public class PsiMethodGeneratorTests {
 
     //region Вспомогательные методы
 
+    public void saveTestToFile(String testContent, String basePath, String fileName) {
+        // Создание пути к файлу
+        Path path = Paths.get(basePath, fileName + ".java");
+        try {
+            // Создание директории, если она не существует
+            Files.createDirectories(path.getParent());
+            // Запись строки в файл, если файл не существует, он будет создан
+            Files.write(path, testContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            System.out.println("Test file was successfully saved: " + path);
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
     /**
      * Создание сигнатуры метода с учетом всех типов
      *
@@ -88,6 +107,70 @@ public class PsiMethodGeneratorTests {
         signatureBuilder.append("]");
         signatureBuilder.append(")");
         return signatureBuilder.toString();
+    }
+
+    /**
+     * Генерирует исходный код Java метода на основе данных PsiMethod.
+     *
+     * @param psiMethod метод для генерации исходного кода
+     * @return строка с исходным кодом метода
+     */
+    public String generateJavaMethod(PsiMethod psiMethod) {
+        if (psiMethod == null)
+            throw new NullPointerException("PsiMethod is null");
+
+        StringBuilder methodBuilder = new StringBuilder();
+        PsiType returnType = psiMethod.getReturnType();
+        String methodName = psiMethod.getName();
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        StringJoiner parameterList = new StringJoiner(", ");
+
+        // Составление списка параметров
+        for (PsiParameter parameter : parameters) {
+            String parameterType = parameter.getType().getCanonicalText();
+            String parameterName = parameter.getName();
+            parameterList.add(parameterType + " " + parameterName);
+        }
+
+        // Определение возвращаемого типа
+        String returnTypeName = (returnType != null) ? returnType.getCanonicalText() : "void";
+        methodBuilder.append(returnTypeName).append(" ").append(methodName).append("(");
+        methodBuilder.append(parameterList.toString()).append(") {\n");
+
+        // Добавление тела метода в зависимости от возвращаемого типа
+        if ("void".equals(returnTypeName)) {
+            methodBuilder.append("    // TODO: Реализация метода\n");
+        } else {
+            methodBuilder.append("    return ").append(getDefaultValue(returnTypeName)).append(";\n");
+        }
+        methodBuilder.append("}\n");
+
+        return methodBuilder.toString();
+    }
+
+    /**
+     * Возвращает значение по умолчанию для типа данных.
+     *
+     * @param typeName имя типа данных
+     * @return строковое представление значения по умолчанию
+     */
+    private String getDefaultValue(String typeName) {
+        switch (typeName) {
+            case "boolean":
+                return "false";
+            case "int":
+            case "short":
+            case "long":
+            case "byte":
+                return "0";
+            case "double":
+            case "float":
+                return "0.0";
+            case "char":
+                return "'\\0'";
+            default:
+                return "null";
+        }
     }
 
     private PsiParameter createPsiParameter(PsiType type, String name) {
@@ -248,7 +331,7 @@ public class PsiMethodGeneratorTests {
             String infoStr = generator.getInfo(methods[i]);
             System.out.println(infoStr);
             System.out.println();
-            Assertions.assertEquals(expectedInfoStrs[i],infoStr);
+            Assertions.assertEquals(expectedInfoStrs[i], infoStr);
         }
     }
 
@@ -262,8 +345,23 @@ public class PsiMethodGeneratorTests {
     @Test
     void testGenerateMethod_ParameterizedTest() {
         this.generator.setDebug(true);
+        String methodImplementationStr = generateJavaMethod(mockVoidMethod);
         String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
+        System.out.println(methodImplementationStr);
         System.out.println(parameterizedTestStr);
+        //TODO: добавить импорты, обернуть в класс как в файле Образец_теста
+
+        // Абсолютный путь до папки
+        String basePath = "src\\test\\java\\org\\dasxunya\\diploma\\generator\\actualTests";
+        String fileName = "Parameterized" + mockVoidMethod.getName(); // Например, ParameterizedVoidMethod
+
+        // Сохранение содержимого в файл
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(methodImplementationStr).append("\n");
+
+        stringBuilder.append(methodImplementationStr).append("\n");
+        stringBuilder.append(parameterizedTestStr).append("\n");
+        saveTestToFile(parameterizedTestStr, basePath, fileName);
     }
     //endregion
 }

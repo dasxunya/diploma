@@ -72,6 +72,84 @@ public class UnitTestsGenerator {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
+    private String generateExampleData(PsiType type) {
+        String typeName = type.getPresentableText();
+        switch (typeName) {
+            case "int":
+                return "0";
+            case "double":
+                return "0.0";
+            case "String":
+                return "\"exampleString\"";
+            case "boolean":
+                return "true";
+            case "byte":
+                return "0";
+            case "char":
+                return "'a'";
+            case "short":
+                return "0";
+            case "long":
+                return "0";
+            case "float":
+                return "0.0f";
+            default:
+                return "null";  // По умолчанию для всех неизвестных или сложных типов
+        }
+    }
+
+
+    private String generateMethodAssert(PsiMethod psiMethod) throws NullPointerException {
+        if (psiMethod == null)
+            throwNullPointerException(PsiMethod.class);
+        StringBuilder stringBuilder = new StringBuilder();
+
+        //region Получение данных метода
+        String methodName = psiMethod.getName();
+        PsiType returnType = psiMethod.getReturnType();
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        StringJoiner parameterCalls = new StringJoiner(", ");
+        for (PsiParameter parameter : parameters) {
+            String name = parameter.getName();
+            parameterCalls.add(name);
+        }
+        //endregion
+
+        //region Выбор утверждения в зависимости от типа возвращаемого значения
+        String methodCallText = String.format("%s(%s)", methodName, parameterCalls);
+        if (returnType != null) {
+            String returnTypeText = returnType.getCanonicalText();
+            switch (returnTypeText) {
+                case "boolean":
+                    stringBuilder.append(String.format("assertTrue(%s);\n", methodCallText));
+                    break;
+                case "int":
+                case "long":
+                case "short":
+                case "byte":
+                    stringBuilder.append(String.format("assertEquals(expectedValue, %s);\n", methodCallText));
+                    break;
+                case "double":
+                case "float":
+                    stringBuilder.append(String.format("assertEquals(expectedValue, %s, 0.01); // Укажите дельту для float и double\n", methodCallText));
+                    break;
+                case "char":
+                    stringBuilder.append(String.format("assertEquals('expectedChar', %s);\n", methodCallText));
+                    break;
+                default:
+                    stringBuilder.append(String.format("assertNotNull(%s);\n", methodCallText));
+                    break;
+            }
+
+        } else {
+            stringBuilder.append(String.format("\t%s\n", methodCallText));
+            stringBuilder.append("\t// TODO: Проверка изменений состояния или взаимодействий\n");
+        }
+        //endregion
+        return stringBuilder.toString();
+    }
+
+
     @SuppressWarnings({"StringBufferReplaceableByString", "DataFlowIssue"})
     public String getInfo(PsiMethod psiMethod) throws NullPointerException {
         //region Проверка ссылки на объект
@@ -105,6 +183,7 @@ public class UnitTestsGenerator {
         //endregion
         return info.toString();
     }
+
 
     // Метод для генерации тестового класса для всех методов в классе
     public String generate(PsiClass psiClass, TestType testType) {
@@ -172,32 +251,44 @@ public class UnitTestsGenerator {
 
         //region Основные свойства метода
         String methodName = psiMethod.getName();
-        PsiType returnType = psiMethod.getReturnType();
+
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         String testMethodName = "test" + capitalize(methodName);
-        StringJoiner parameterTypes = new StringJoiner(", ");
+        StringJoiner parameterListWithTypes = new StringJoiner(", ");
+
         StringJoiner parameterNames = new StringJoiner(", ");
         StringJoiner parameterList = new StringJoiner(", ");
+        for (PsiParameter parameter : parameters) {
+            String parameterType = parameter.getType().getPresentableText();
+            String name = parameter.getName();
+            parameterListWithTypes.add(parameterType + " " + name);
+        }
         //endregion
 
         if (testType == TestType.PARAMETERIZED) {
-
-            //region Генерация тела параметризованного теста
             stringBuilder.append("@ParameterizedTest\n");
             stringBuilder.append("@CsvSource({\n");
 
             // Добавление тестовых строк данных
-            // Здесь вы можете добавить свои тестовые данные
-            // Пример: "\"testString1\", 1, 2.0", "\"testString2\", 2, 3.0"
-            stringBuilder.append("    \"exampleString1, 100, 200.0\",\n");
-            stringBuilder.append("    \"exampleString2, 101, 201.0\"\n");
+            StringJoiner csvData = new StringJoiner("\",\n    \"", "    \"", "\"\n");
+            StringBuilder testData = new StringBuilder();
+            for (int i = 0; i < parameters.length; i++) {
+                if (i > 0) testData.append(", ");
+                PsiType type = parameters[i].getType();
+                testData.append(generateExampleData(type));
+            }
+            csvData.add(testData.toString());
+            csvData.add(testData.toString());
+            stringBuilder.append(csvData.toString());
             stringBuilder.append("})\n");
 
+            //region Генерация тела параметризованного теста
             stringBuilder.append("public void ").append(testMethodName).append("(");
-            stringBuilder.append(parameterTypes.toString());
+            stringBuilder.append(parameterListWithTypes.toString());
             stringBuilder.append(") {\n");
             stringBuilder.append("    // TODO: Тестируемая логика\n");
-            stringBuilder.append("    // TODO: добавить проверки утверждений с помощью assert\n");
+            stringBuilder.append(String.format("\t%s", this.generateMethodAssert(psiMethod)));
+            stringBuilder.append("    // TODO: добавить другие утверждения\n");
             stringBuilder.append("}\n");
             //endregion
         } else {
