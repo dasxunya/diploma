@@ -73,11 +73,9 @@ public class PsiMethodGeneratorTests {
     private PsiParameter mockPsiParameterBrand, mockPsiParameterModel, mockPsiParameterYear, mockPsiParameterPrice;
     //region Примитивные типы
     @Mock
-    private PsiType mockPsiTypeInt, mockPsiTypeDouble, mockPsiTypeBoolean, mockPsiTypeByte, mockPsiTypeChar,
-            mockPsiTypeShort, mockPsiTypeLong, mockPsiTypeFloat, mockPsiTypeString;
+    private PsiType mockPsiTypeInt, mockPsiTypeDouble, mockPsiTypeBoolean, mockPsiTypeByte, mockPsiTypeChar, mockPsiTypeShort, mockPsiTypeLong, mockPsiTypeFloat, mockPsiTypeString;
     @Mock
-    private PsiParameter mockPsiParameterInt, mockPsiParameterDouble, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar,
-            mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterString;
+    private PsiParameter mockPsiParameterInt, mockPsiParameterDouble, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterString;
     //endregion
     //endregion
 
@@ -146,8 +144,7 @@ public class PsiMethodGeneratorTests {
      * @return строка с исходным кодом метода
      */
     public String generateJavaMethod(PsiMethod psiMethod) {
-        if (psiMethod == null)
-            throw new NullPointerException("PsiMethod is null");
+        if (psiMethod == null) throw new NullPointerException("PsiMethod is null");
 
         StringBuilder methodBuilder = new StringBuilder();
         PsiType returnType = psiMethod.getReturnType();
@@ -157,7 +154,7 @@ public class PsiMethodGeneratorTests {
 
         // Составление списка параметров
         for (PsiParameter parameter : parameters) {
-            String parameterType = parameter.getType().getCanonicalText();
+            String parameterType = parameter.getType().getPresentableText();
             String parameterName = parameter.getName();
             parameterList.add(parameterType + " " + parameterName);
         }
@@ -222,8 +219,7 @@ public class PsiMethodGeneratorTests {
         when(method.getParameterList()).thenReturn(parameterList);
 
         // Сигнатура конструктора
-        if (parameters == null)
-            parameters = new PsiParameter[]{};
+        if (parameters == null) parameters = new PsiParameter[]{};
         String signature = this.generateSignature(method, parameters);
         MethodSignature methodSignature = mock(MethodSignature.class);
         when(methodSignature.toString()).thenReturn(signature);
@@ -259,30 +255,19 @@ public class PsiMethodGeneratorTests {
     }
 
     private void setUpConstructor() {
-        PsiParameter[] parameters = {
-                createPsiParameter(mockPsiTypeString, "brand"),
-                createPsiParameter(mockPsiTypeString, "model"),
-                createPsiParameter(mockPsiTypeInt, "year"),
-                createPsiParameter(mockPsiTypeDouble, "price")
-        };
+        PsiParameter[] parameters = {createPsiParameter(mockPsiTypeString, "brand"), createPsiParameter(mockPsiTypeString, "model"), createPsiParameter(mockPsiTypeInt, "year"), createPsiParameter(mockPsiTypeDouble, "price")};
         mockConstructor = createPsiMethod(null, "Car", parameters);
     }
 
     @SuppressWarnings({"UnstableApiUsage", "deprecation"})
     private void setupVoidMethod() {
-        PsiParameter[] parameters = {
-                mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte,
-                mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble
-        };
+        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
         mockVoidMethod = createPsiMethod(PsiType.VOID, "voidMethod", parameters);
     }
 
     private void setupReturnMethod() {
         // Подготовка всех параметров
-        PsiParameter[] parameters = {
-                mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte,
-                mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble
-        };
+        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
         mockReturnMethod = createPsiMethod(mockPsiTypeBoolean, "returnMethod", parameters);
     }
 
@@ -315,7 +300,7 @@ public class PsiMethodGeneratorTests {
         when(instance.getPackage(mockPsiDirectory)).thenReturn(mockPsiPackage);
         //endregion
         //region Настройка моков для PsiPackage
-        when(mockPsiPackage.getQualifiedName()).thenReturn("com.example.package");
+        when(mockPsiPackage.getQualifiedName()).thenReturn("org.dasxunya.diploma.generator.actualTests");
         //endregion
         //region Настройка параметров
         setupPrimitiveParameters();
@@ -356,27 +341,13 @@ public class PsiMethodGeneratorTests {
     void testGetInfo() {
         this.generator.setDebug(true);
         PsiMethod methods[] = {mockConstructor, mockVoidMethod, mockReturnMethod, mockNoParamMethod};
-        String expectedInfoStrs[] = {
-                "Название: Car\n" +
-                "Возвращаемый тип: void\n" +
-                "Сигнатура: Car([PsiType:String, PsiType:String, PsiType:int, PsiType:double])\n" +
-                "Параметры: String brand, String model, int year, double price",
+        String expectedInfoStrs[] = {"Название: Car\n" + "Возвращаемый тип: void\n" + "Сигнатура: Car([PsiType:String, PsiType:String, PsiType:int, PsiType:double])\n" + "Параметры: String brand, String model, int year, double price",
 
-                "Название: voidMethod\n" +
-                "Возвращаемый тип: void\n" +
-                "Сигнатура: voidMethod([PsiType:String, PsiType:int, PsiType:boolean, PsiType:byte, PsiType:char, PsiType:short, PsiType:long, PsiType:float, PsiType:double])\n" +
-                "Параметры: String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d",
+                "Название: voidMethod\n" + "Возвращаемый тип: void\n" + "Сигнатура: voidMethod([PsiType:String, PsiType:int, PsiType:boolean, PsiType:byte, PsiType:char, PsiType:short, PsiType:long, PsiType:float, PsiType:double])\n" + "Параметры: String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d",
 
-                "Название: returnMethod\n" +
-                "Возвращаемый тип: boolean\n" +
-                "Сигнатура: returnMethod([PsiType:String, PsiType:int, PsiType:boolean, PsiType:byte, PsiType:char, PsiType:short, PsiType:long, PsiType:float, PsiType:double])\n" +
-                "Параметры: String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d",
+                "Название: returnMethod\n" + "Возвращаемый тип: boolean\n" + "Сигнатура: returnMethod([PsiType:String, PsiType:int, PsiType:boolean, PsiType:byte, PsiType:char, PsiType:short, PsiType:long, PsiType:float, PsiType:double])\n" + "Параметры: String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d",
 
-                "Название: noParamMethod\n" +
-                "Возвращаемый тип: String\n" +
-                "Сигнатура: noParamMethod([])\n" +
-                "Параметры: Нет параметров"
-        };
+                "Название: noParamMethod\n" + "Возвращаемый тип: String\n" + "Сигнатура: noParamMethod([])\n" + "Параметры: Нет параметров"};
         assertEquals(methods.length, expectedInfoStrs.length);
         for (int i = 0; i < methods.length; i++) {
             String infoStr = generator.getInfo(methods[i]);
@@ -408,27 +379,18 @@ public class PsiMethodGeneratorTests {
         System.out.println(parameterizedTestStr);
 
         StringBuilder stringBuilder = new StringBuilder();
-
-        //TODO: добавить импорты, обернуть в класс как в файле Образец_теста
-//        PsiFile psiFile = mockVoidMethod.getContainingFile();
-//        PsiDirectory psiDirectory = psiFile.getContainingDirectory();
-//
-//        VirtualFile virtualFile = psiDirectory.getVirtualFile();
-//        String packagePath = virtualFile.getPath();
-//
-//        System.out.println(packagePath);
         stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
+        stringBuilder.append("\n");
+        stringBuilder.append("{\n");
         // Абсолютный путь до папки
         String basePath = "src\\test\\java\\org\\dasxunya\\diploma\\generator\\actualTests";
-        String fileName = "Parameterized" + mockVoidMethod.getName(); // Например, ParameterizedVoidMethod
-
+        //String fileName = "Parameterized" + mockVoidMethod.getName(); // Например, ParameterizedVoidMethod
+        String fileName = String.format("%sTests", mockPsiClass.getName());
         // Сохранение содержимого в файл
-
-        stringBuilder.append(methodImplementationStr).append("\n");
-
         stringBuilder.append(methodImplementationStr).append("\n");
         stringBuilder.append(parameterizedTestStr).append("\n");
-        saveTestToFile(parameterizedTestStr, basePath, fileName);
+        stringBuilder.append("}\n");
+        saveTestToFile(stringBuilder.toString(), basePath, fileName);
         //TODO: добавить проверки сгенерированного теста
         //deleteFile(basePath, fileName);
     }

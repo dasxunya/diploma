@@ -77,7 +77,7 @@ public class UnitTestsGenerator {
             case "double":
                 return "0.0";
             case "String":
-                return "\"exampleString\"";
+                return "exampleString";
             case "boolean":
                 return "true";
             case "byte":
@@ -133,7 +133,7 @@ public class UnitTestsGenerator {
                     stringBuilder.append(String.format("assertEquals('expectedChar', %s);\n", methodCallText));
                     break;
                 default:
-                    stringBuilder.append(String.format("assertNotNull(%s);\n", methodCallText));
+                    stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
                     break;
             }
 
@@ -194,16 +194,14 @@ public class UnitTestsGenerator {
         PsiFile psiFile = psiClass.getContainingFile();
         PsiDirectory psiDirectory = psiFile.getContainingDirectory();
         PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-        if (psiPackage == null) throw new NullPointerException("Не удалось получить пакет, которому принадлежит класс");
+        if (psiPackage == null)
+            throw new NullPointerException("Не удалось получить пакет, которому принадлежит класс");
         // Импорт пакета
         stringBuilder.append(String.format("package %s;\n", psiPackage.getQualifiedName()));
         // Добавление библиотек
-        imports.add("org.junit.jupiter.api.Test");
-        if (testType == TestType.PARAMETERIZED) {
-            imports.add("org.junit.jupiter.params.ParameterizedTest");
-            imports.add("org.junit.jupiter.params.provider.Arguments");
-            imports.add("org.junit.jupiter.params.provider.MethodSource");
-        }
+        imports.add(Constants.Strings.Imports.orgJunitJupiterAll);
+        imports.add(Constants.Strings.Imports.orgJunitJupiterParamsAll);
+        imports.add(Constants.Strings.Imports.orgJunitJupiterParamsProviderAll);
         //endregion
         //region Добавление бибилотек в код тестирующего класса
         for (String importStr : imports)
