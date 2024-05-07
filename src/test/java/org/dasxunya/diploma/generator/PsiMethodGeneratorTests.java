@@ -2,17 +2,18 @@ package org.dasxunya.diploma.generator;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import org.dasxunya.diploma.constants.Constants;
 import org.dasxunya.diploma.constants.TestType;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
+import java.util.List;
 import java.util.Objects;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +30,18 @@ public class PsiMethodGeneratorTests {
 
 
     //region Поля
+    private MockedStatic<ApplicationManager> mockedApplicationManager;
+    /**
+     * Абсолютный путь до папки с полученными значениями тестов
+     */
+    String actualFolderPath = "src\\test\\java\\org\\dasxunya\\diploma\\generator\\actualTests";
+    /**
+     * Абсолютный путь до папки с ожидаемыми значениями тестов
+     */
+    String expectedFolderPath = "src\\test\\java\\org\\dasxunya\\diploma\\generator\\expectedTests";
+    /**
+     * Генератор тестов
+     */
     UnitTestsGenerator generator;
     //region Макеты Psi элементов
     @Mock
@@ -81,14 +94,26 @@ public class PsiMethodGeneratorTests {
 
     //region Вспомогательные методы
 
-    public void saveTestToFile(String testContent, String basePath, String fileName) {
+    public void print(String message) {
+        System.out.print(message);
+    }
+
+    public void println(String message) {
+        System.out.println(message);
+    }
+
+    public String combinePath(String folderPath, String fileName, String extension) {
+        return String.format("%s\\%s.%s", folderPath, fileName, extension);
+    }
+
+    public void saveFile(String fileContent, String basePath, String fileName, String extension) {
         // Создание пути к файлу
-        Path path = Paths.get(basePath, fileName + ".java");
+        Path path = Paths.get(basePath, fileName + "." + extension);
         try {
             // Создание директории, если она не существует
             Files.createDirectories(path.getParent());
             // Запись строки в файл, если файл не существует, он будет создан
-            Files.write(path, testContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(path, fileContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             System.out.println("Test file was successfully saved: " + path);
         } catch (IOException e) {
             System.err.println("Error writing to file: " + e.getMessage());
@@ -113,6 +138,49 @@ public class PsiMethodGeneratorTests {
         } catch (IOException e) {
             System.err.println("Error deleting file: " + e.getMessage());
         }
+    }
+
+    /**
+     * Сравнивает два текстовых файла построчно.
+     *
+     * @param pathToFile1 путь к первому файлу
+     * @param pathToFile2 путь ко второму файлу
+     * @throws IOException если произошла ошибка при чтении файлов
+     */
+    public void compareFilesByPath(String pathToFile1, String pathToFile2) throws Exception {
+        Path file1 = Paths.get(pathToFile1);
+        Path file2 = Paths.get(pathToFile2);
+
+        if (file1.equals(file2)) {
+            throw new Exception("Сравнивается один и тот же файл!");
+        }
+
+        List<String> linesOfFile1 = Files.readAllLines(file1);
+        List<String> linesOfFile2 = Files.readAllLines(file2);
+
+        // Проверяем, что количество строк одинаково
+        assertEquals(linesOfFile1.size(), linesOfFile2.size(), "Количество строк в файлах различается.");
+
+        // Сравниваем строки одна за другой
+        for (int i = 0; i < linesOfFile1.size(); i++) {
+            assertEquals(linesOfFile1.get(i), linesOfFile2.get(i), "Строка " + (i + 1) + " различается.");
+        }
+
+        println(String.format("Файлы '%s' и '%s' полностью совпадают", pathToFile1, pathToFile2));
+    }
+
+    /**
+     * Сравнивает файлы построчно
+     *
+     * @param fileNameExpected Имя файла с ожмдаемыми результатами
+     * @param fileNameActual   Имя файла с полученными результатами
+     * @param extension        расширение файлов
+     * @throws IOException если произошла ошибка при чтении файлов
+     */
+    public void compareFilesByName(String fileNameExpected, String fileNameActual, String extension) throws Exception {
+        String expectedPath = this.combinePath(this.expectedFolderPath, fileNameExpected, extension);
+        String actualPath = this.combinePath(this.actualFolderPath, fileNameActual, extension);
+        this.compareFilesByPath(expectedPath, actualPath);
     }
 
     /**
@@ -182,22 +250,13 @@ public class PsiMethodGeneratorTests {
      * @return строковое представление значения по умолчанию
      */
     private String getDefaultValue(String typeName) {
-        switch (typeName) {
-            case "boolean":
-                return "false";
-            case "int":
-            case "short":
-            case "long":
-            case "byte":
-                return "0";
-            case "double":
-            case "float":
-                return "0.0";
-            case "char":
-                return "'\\0'";
-            default:
-                return "null";
-        }
+        return switch (typeName) {
+            case "boolean" -> "false";
+            case "int", "short", "long", "byte" -> "0";
+            case "double", "float" -> "0.0";
+            case "char" -> "'\\0'";
+            default -> "null";
+        };
     }
 
     private PsiParameter createPsiParameter(PsiType type, String name) {
@@ -207,7 +266,7 @@ public class PsiMethodGeneratorTests {
         return parameter;
     }
 
-    @SuppressWarnings("UnstableApiUsage")
+    @SuppressWarnings({"UnstableApiUsage", "deprecation"})
     public PsiMethod createPsiMethod(PsiType returnType, String name, PsiParameter[] parameters) {
         PsiMethod method = mock(PsiMethod.class);
         when(method.getName()).thenReturn(name);
@@ -241,6 +300,8 @@ public class PsiMethodGeneratorTests {
         when(mockPsiTypeFloat.getPresentableText()).thenReturn("float");
         when(mockPsiTypeDouble.getPresentableText()).thenReturn("double");
         when(mockPsiTypeString.getPresentableText()).thenReturn("String");
+        when(mockPsiTypeString.getCanonicalText()).thenReturn("String");
+
 
         // Создание параметров с помощью вспомогательного метода
         mockPsiParameterBoolean = createPsiParameter(mockPsiTypeBoolean, "flag");
@@ -314,9 +375,67 @@ public class PsiMethodGeneratorTests {
         setupNoParamMethod();
         //endregion
     }
+
+    @AfterEach
+    void tearDown() {
+        // Очистка мокирования статического метода
+        //mockedApplicationManager.close();
+    }
     //endregion
 
     //region Тесты
+
+    @SuppressWarnings({"UnstableApiUsage", "deprecation"})
+    @Test
+    void testGenerateTypeAssert() {
+        //region Типы
+        PsiType[] types = {
+                PsiType.INT,
+                PsiType.BOOLEAN,
+                PsiType.BYTE,
+                PsiType.CHAR,
+                PsiType.SHORT,
+                PsiType.LONG,
+                PsiType.FLOAT,
+                PsiType.DOUBLE,
+                PsiType.VOID,
+                mockPsiTypeString
+        };
+        //endregion
+        //region Параметры
+        PsiParameter[] parameters = {
+                mockPsiParameterString,
+                mockPsiParameterInt,
+                mockPsiParameterBoolean,
+                mockPsiParameterByte,
+                mockPsiParameterChar,
+                mockPsiParameterShort,
+                mockPsiParameterLong,
+                mockPsiParameterFloat,
+                mockPsiParameterDouble
+        };
+        //endregion
+        StringBuilder stringBuilder = new StringBuilder();
+        for (PsiType type : types) {
+            stringBuilder.append(String.format("Возвращаемый тип '%s'", type.getPresentableText()));
+            stringBuilder.append("\n");
+            mockReturnMethod = createPsiMethod(type, String.format("%sMethod", type.getPresentableText()), parameters);
+            stringBuilder.append(generator.generateTypeAssert(mockReturnMethod.getReturnType(), generator.getMethodCallString(mockReturnMethod)));
+            stringBuilder.append("\n");
+        }
+        String actualFileName = "testGenerateTypeAssert";
+        String expectedFileName = "testGenerateTypeAssert";
+        this.saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
+        try {
+            this.compareFilesByPath(
+                    combinePath(this.expectedFolderPath, expectedFileName, Constants.Strings.Extensions.txt),
+                    combinePath(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt)
+            );
+        } catch (Exception e) {
+            println(e.getMessage());
+        }
+    }
+
     @SuppressWarnings("ConstantValue")
     @Test
     void testGenerate_NullMethod() {
@@ -340,21 +459,21 @@ public class PsiMethodGeneratorTests {
     @Test
     void testGetInfo() {
         this.generator.setDebug(true);
-        PsiMethod methods[] = {mockConstructor, mockVoidMethod, mockReturnMethod, mockNoParamMethod};
-        String expectedInfoStrs[] = {"Название: Car\n" + "Возвращаемый тип: void\n" + "Сигнатура: Car([PsiType:String, PsiType:String, PsiType:int, PsiType:double])\n" + "Параметры: String brand, String model, int year, double price",
-
-                "Название: voidMethod\n" + "Возвращаемый тип: void\n" + "Сигнатура: voidMethod([PsiType:String, PsiType:int, PsiType:boolean, PsiType:byte, PsiType:char, PsiType:short, PsiType:long, PsiType:float, PsiType:double])\n" + "Параметры: String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d",
-
-                "Название: returnMethod\n" + "Возвращаемый тип: boolean\n" + "Сигнатура: returnMethod([PsiType:String, PsiType:int, PsiType:boolean, PsiType:byte, PsiType:char, PsiType:short, PsiType:long, PsiType:float, PsiType:double])\n" + "Параметры: String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d",
-
-                "Название: noParamMethod\n" + "Возвращаемый тип: String\n" + "Сигнатура: noParamMethod([])\n" + "Параметры: Нет параметров"};
-        assertEquals(methods.length, expectedInfoStrs.length);
-        for (int i = 0; i < methods.length; i++) {
-            String infoStr = generator.getInfo(methods[i]);
-            System.out.println(infoStr);
-            System.out.println();
-            Assertions.assertEquals(expectedInfoStrs[i], infoStr);
+        PsiMethod[] methods = {mockConstructor, mockVoidMethod, mockReturnMethod, mockNoParamMethod};
+        StringBuilder stringBuilder = new StringBuilder();
+        for (PsiMethod method : methods) {
+            stringBuilder.append(generator.getInfo(method));
+            stringBuilder.append("\n");
         }
+        String actualFileName = "testGetInfo";
+        String expectedFileName = "testGetInfo";
+        this.saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
+        try {
+            this.compareFilesByName(actualFileName, expectedFileName, Constants.Strings.Extensions.txt);
+        } catch (Exception e) {
+            println(e.getMessage());
+        }
+
     }
 
     @Test
@@ -382,15 +501,14 @@ public class PsiMethodGeneratorTests {
         stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
         stringBuilder.append("\n");
         stringBuilder.append("{\n");
-        // Абсолютный путь до папки
-        String basePath = "src\\test\\java\\org\\dasxunya\\diploma\\generator\\actualTests";
+
         //String fileName = "Parameterized" + mockVoidMethod.getName(); // Например, ParameterizedVoidMethod
         String fileName = String.format("%sTests", mockPsiClass.getName());
         // Сохранение содержимого в файл
         stringBuilder.append(methodImplementationStr).append("\n");
         stringBuilder.append(parameterizedTestStr).append("\n");
         stringBuilder.append("}\n");
-        saveTestToFile(stringBuilder.toString(), basePath, fileName);
+        saveFile(stringBuilder.toString(), this.actualFolderPath, fileName, Constants.Strings.Extensions.java);
         //TODO: добавить проверки сгенерированного теста
         //deleteFile(basePath, fileName);
     }

@@ -95,56 +95,105 @@ public class UnitTestsGenerator {
         }
     }
 
+    public String getMethodCallString(PsiMethod psiMethod) throws NullPointerException {
+        if (psiMethod == null)
+            throwNullPointerException(PsiMethod.class);
+        if (psiMethod != null) {
+            String methodName = psiMethod.getName();
+            PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            StringJoiner parameterCalls = new StringJoiner(", ");
+            for (PsiParameter parameter : parameters) {
+                String name = parameter.getName();
+                parameterCalls.add(name);
+            }
+            return String.format("%s(%s)", methodName, parameterCalls);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    public String generateTypeAssert(PsiType psiType, String actualExpression) throws NullPointerException {
+        if (psiType == null)
+            throwNullPointerException(PsiType.class);
+        StringBuilder stringBuilder = new StringBuilder();
+        if (psiType != null) {
+            String returnTypeText = psiType.getCanonicalText();
+            switch (returnTypeText.toLowerCase()) {
+                case Constants.Strings.Types.booleanType:
+                    stringBuilder.append(String.format("%s(%s);\n", Constants.Strings.Tests.Assertions.assertTrue, actualExpression));
+                    stringBuilder.append(String.format("%s(%s);\n", Constants.Strings.Tests.Assertions.assertFalse, actualExpression));
+                    break;
+                case Constants.Strings.Types.intType:
+                case Constants.Strings.Types.longType:
+                case Constants.Strings.Types.shortType:
+                case Constants.Strings.Types.byteType:
+                case Constants.Strings.Types.charType:
+                    stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                    stringBuilder.append(String.format("%s(expectedValue, %s);\n", Constants.Strings.Tests.Assertions.assertEqual, actualExpression));
+                    break;
+                case Constants.Strings.Types.doubleType:
+                case Constants.Strings.Types.floatType:
+                    stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                    stringBuilder.append(String.format("%s(expectedValue, %s, 0.01); // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, actualExpression));
+                    break;
+                case Constants.Strings.Types.voidType:
+                    break;
+                default:
+                    stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", actualExpression));
+                    break;
+            }
+        }
+        return stringBuilder.toString();
+    }
 
     private String generateMethodAssert(PsiMethod psiMethod) throws NullPointerException {
         if (psiMethod == null) throwNullPointerException(PsiMethod.class);
         StringBuilder stringBuilder = new StringBuilder();
-
-        //region Получение данных метода
-        String methodName = psiMethod.getName();
-        PsiType returnType = psiMethod.getReturnType();
-        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-        StringJoiner parameterCalls = new StringJoiner(", ");
-        for (PsiParameter parameter : parameters) {
-            String name = parameter.getName();
-            parameterCalls.add(name);
-        }
-        //endregion
-
-        //region Выбор утверждения в зависимости от типа возвращаемого значения
-        String methodCallText = String.format("%s(%s)", methodName, parameterCalls);
-        if (returnType != null) {
-            String returnTypeText = returnType.getCanonicalText();
-            switch (returnTypeText) {
-                case "boolean":
-                    stringBuilder.append(String.format("assertTrue(%s);\n", methodCallText));
-                    break;
-                case "int":
-                case "long":
-                case "short":
-                case "byte":
-                    stringBuilder.append(String.format("assertEquals(expectedValue, %s);\n", methodCallText));
-                    break;
-                case "double":
-                case "float":
-                    stringBuilder.append(String.format("assertEquals(expectedValue, %s, 0.01); // Укажите дельту для float и double\n", methodCallText));
-                    break;
-                case "char":
-                    stringBuilder.append(String.format("assertEquals('expectedChar', %s);\n", methodCallText));
-                    break;
-                default:
-                    stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
-                    break;
+        if (psiMethod != null) {
+            //region Получение данных метода
+            String methodName = psiMethod.getName();
+            PsiType returnType = psiMethod.getReturnType();
+            PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            StringJoiner parameterCalls = new StringJoiner(", ");
+            for (PsiParameter parameter : parameters) {
+                String name = parameter.getName();
+                parameterCalls.add(name);
             }
-
-        } else {
-            stringBuilder.append(String.format("\t%s\n", methodCallText));
-            stringBuilder.append("\t// TODO: Проверка изменений состояния или взаимодействий\n");
+            //endregion
+            if (returnType == null)
+                throwNullPointerException(PsiType.class);
+            //region Выбор утверждения в зависимости от типа возвращаемого значения
+            String methodCallText = String.format("%s(%s)", methodName, parameterCalls);
+            if (returnType != null) {
+                String returnTypeText = returnType.getCanonicalText();
+                switch (returnTypeText.toLowerCase()) {
+                    case Constants.Strings.Types.booleanType:
+                        stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertTrue, methodCallText));
+                        stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertFalse, methodCallText));
+                        break;
+                    case Constants.Strings.Types.intType:
+                    case Constants.Strings.Types.longType:
+                    case Constants.Strings.Types.shortType:
+                    case Constants.Strings.Types.byteType:
+                    case Constants.Strings.Types.charType:
+                        stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                        stringBuilder.append(String.format("%s(expectedValue, %s)\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        break;
+                    case Constants.Strings.Types.doubleType:
+                    case Constants.Strings.Types.floatType:
+                        stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                        stringBuilder.append(String.format("%s(expectedValue, %s, 0.01) // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        break;
+                    default:
+                        stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
+                        break;
+                }
+            }
+            //endregion
         }
-        //endregion
+
         return stringBuilder.toString();
     }
-
 
     @SuppressWarnings({"StringBufferReplaceableByString", "DataFlowIssue"})
     public String getInfo(PsiMethod psiMethod) throws NullPointerException {
@@ -270,8 +319,7 @@ public class UnitTestsGenerator {
         if (testType == TestType.PARAMETERIZED) {
             stringBuilder.append("@ParameterizedTest\n");
             stringBuilder.append("@CsvSource({\n");
-
-            // Добавление тестовых строк данных
+            //region Добавление тестовых строк данных
             StringJoiner csvData = new StringJoiner("\",\n    \"", "    \"", "\"\n");
             StringBuilder testData = new StringBuilder();
             for (int i = 0; i < parameters.length; i++) {
@@ -282,8 +330,8 @@ public class UnitTestsGenerator {
             csvData.add(testData.toString());
             csvData.add(testData.toString());
             stringBuilder.append(csvData.toString());
+            //endregion
             stringBuilder.append("})\n");
-
             //region Генерация тела параметризованного теста
             stringBuilder.append("public void ").append(testMethodName).append("(");
             stringBuilder.append(parameterListWithTypes.toString());

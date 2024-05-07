@@ -15,7 +15,7 @@ void voidMethod(String str, int i, boolean flag, byte b, char c, short s, long l
 })
 public void testVoidMethod(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
     // TODO: Тестируемая логика
-	//Assertions.assertNotNull(voidMethod(str, i, flag, b, c, s, l, f, d));
+	// Assertions.assertNotNull(voidMethod(str, i, flag, b, c, s, l, f, d));
     // TODO: добавить другие утверждения
 }
 
