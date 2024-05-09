@@ -168,6 +168,7 @@ public class UnitTestsGenerator {
                 String returnTypeText = returnType.getCanonicalText();
                 switch (returnTypeText.toLowerCase()) {
                     case Constants.Strings.Types.booleanType:
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertTrue, methodCallText));
                         stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertFalse, methodCallText));
                         break;
@@ -176,13 +177,25 @@ public class UnitTestsGenerator {
                     case Constants.Strings.Types.shortType:
                     case Constants.Strings.Types.byteType:
                     case Constants.Strings.Types.charType:
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
                         stringBuilder.append(String.format("%s(expectedValue, %s)\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
                         break;
                     case Constants.Strings.Types.doubleType:
                     case Constants.Strings.Types.floatType:
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
                         stringBuilder.append(String.format("%s(expectedValue, %s, 0.01) // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        break;
+                    case Constants.Strings.Types.voidType:
+                        for (PsiParameter psiParameter : parameters) {
+                            stringBuilder.append("\t");
+                            if (!psiParameter.getType().getPresentableText().equalsIgnoreCase(Constants.Strings.Types.stringType)) {
+                                stringBuilder.append(String.format("Assertions.assertEquals(%s, %s);\n", psiParameter.getName(), this.generateExampleData(psiParameter.getType())));
+                            } else {
+                                stringBuilder.append(String.format("Assertions.assertEquals(%s, \"%s\");\n", psiParameter.getName(), this.generateExampleData(psiParameter.getType())));
+                            }
+                        }
                         break;
                     default:
                         stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
@@ -337,7 +350,7 @@ public class UnitTestsGenerator {
             stringBuilder.append(parameterListWithTypes.toString());
             stringBuilder.append(") {\n");
             stringBuilder.append("    // TODO: Тестируемая логика\n");
-            stringBuilder.append(String.format("\t%s", this.generateMethodAssert(psiMethod)));
+            stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
             stringBuilder.append("    // TODO: добавить другие утверждения\n");
             stringBuilder.append("}\n");
             //endregion
