@@ -23,15 +23,24 @@ import java.nio.file.StandardOpenOption;
 import java.io.IOException;
 import java.util.StringJoiner;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class PsiMethodGeneratorTests {
 
 
     //region Поля
-    private MockedStatic<ApplicationManager> mockedApplicationManager;
+
+    //region Основные
+    /**
+     * Флаг удаления выходных файлов тестов
+     */
+    boolean isDeleteActualFiles = false;
+    /**
+     * Флаг отладкиы
+     */
+    boolean isDebug = true;
+    MockedStatic<ApplicationManager> mockedApplicationManager;
     /**
      * Абсолютный путь до папки с полученными значениями тестов
      */
@@ -44,6 +53,8 @@ public class PsiMethodGeneratorTests {
      * Генератор тестов
      */
     UnitTestsGenerator generator;
+    //endregion
+
     //region Макеты Psi элементов
     @Mock
     private PsiClass mockPsiClass;
@@ -77,12 +88,14 @@ public class PsiMethodGeneratorTests {
     @Mock
     private PsiMethod mockNoParamMethod;
     //endregion
+
     //region Примитивные типы
     @Mock
     private PsiType mockPsiTypeInt, mockPsiTypeDouble, mockPsiTypeBoolean, mockPsiTypeByte, mockPsiTypeChar, mockPsiTypeShort, mockPsiTypeLong, mockPsiTypeFloat, mockPsiTypeString;
     @Mock
     private PsiParameter mockPsiParameterInt, mockPsiParameterDouble, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterString;
     //endregion
+
     //endregion
 
     //region Вспомогательные методы
@@ -99,7 +112,6 @@ public class PsiMethodGeneratorTests {
         return String.format("%s\\%s.%s", folderPath, fileName, extension);
     }
 
-    @SuppressWarnings("MalformedFormatString")
     public void saveFile(String fileContent, String basePath, String fileName, String extension) {
         // Создание пути к файлу
         Path path = Paths.get(basePath, fileName + "." + extension);
@@ -117,11 +129,12 @@ public class PsiMethodGeneratorTests {
     /**
      * Удаляет файл по указанному пути.
      *
-     * @param basePath базовый путь к директории файла
-     * @param fileName имя файла для удаления
+     * @param basePath  базовый путь к директории файла
+     * @param fileName  имя файла для удаления
+     * @param extension расщирение файла для удаления
      */
-    public void deleteFile(String basePath, String fileName) {
-        Path path = Paths.get(basePath, fileName + ".java");
+    public void deleteFile(String basePath, String fileName, String extension) {
+        Path path = Paths.get(basePath, fileName + "." + extension);
         try {
             if (Files.exists(path)) {  // Проверка существования файла
                 Files.delete(path);    // Удаление файла
@@ -144,6 +157,9 @@ public class PsiMethodGeneratorTests {
     public void compareFilesByPath(String pathToFile1, String pathToFile2) throws Exception {
         Path file1 = Paths.get(pathToFile1);
         Path file2 = Paths.get(pathToFile2);
+
+        assertFalse(Files.notExists(file1), "Файл " + pathToFile1 + " не существует");
+        assertFalse(Files.notExists(file2), "Файл " + pathToFile2 + " не существует");
 
         if (file1.equals(file2)) {
             throw new Exception("Сравнивается один и тот же файл!");
@@ -256,6 +272,12 @@ public class PsiMethodGeneratorTests {
         };
     }
 
+    @SuppressWarnings("UnstableApiUsage")
+    private PsiType[] getTypesList() {
+        //region Типы
+        return new PsiType[]{PsiType.INT, PsiType.BOOLEAN, PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE, PsiType.VOID, mockPsiTypeString};
+    }
+
     private PsiParameter createPsiParameter(PsiType type, String name) {
         PsiParameter parameter = mock(PsiParameter.class);
         when(parameter.getType()).thenReturn(type);
@@ -282,14 +304,67 @@ public class PsiMethodGeneratorTests {
         when(method.getSignature(PsiSubstitutor.EMPTY)).thenReturn(methodSignature);
         return method;
     }
+
+    /**
+     * Запускает тестирование генератора для указанного макета метода
+     *
+     * @param testName            Название теста, совпадает с именем выходного файла
+     * @param actualFileExtension Расширение выходного файла
+     * @param psiMethod           Тестируемый макет метода
+     * @param testType            Тип теста
+     * @param isDebug             Флаг режима отладки
+     */
+    public void startGeneratorTest(String testName, String actualFileExtension, PsiMethod psiMethod, TestType testType, boolean isDebug) {
+        this.generator.setDebug(isDebug);
+
+        //region Генерация тестируемого метода и тестирующего метода
+        String methodImplementationStr = generateJavaMethod(psiMethod);
+        String parameterizedTestStr = generator.generate(psiMethod, testType);
+        if (isDebug) {
+            System.out.println(methodImplementationStr);
+            System.out.println(parameterizedTestStr);
+        }
+        //endregion
+
+        //region Тестирование
+        try {
+            //region Генерация тела теста
+            String testBodyStr = this.generator.getClassHeader(mockPsiClass, testType) +
+                                 "\n" +
+                                 "{\n" +
+
+                                 // Сохранение содержимого в файл
+                                 methodImplementationStr + "\n" +
+                                 parameterizedTestStr + "\n" +
+                                 "}\n";
+            //endregion
+            // Сохранение теста
+            saveFile(testBodyStr, this.actualFolderPath, testName, actualFileExtension);
+            // Сравнение результатов
+            compareFilesByName(testName, testName, actualFileExtension);
+            // Удаление файла после тестирования
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, testName, actualFileExtension);
+        } catch (Exception e) {
+            if (isDebug)
+                throw new RuntimeException(e);
+            else
+                println(e.getMessage());
+        }
+        //endregion
+
+    }
     //endregion
 
     //region Инициализация перед тестом
 
+    /**
+     * Настройка типов
+     */
     private void setupPrimitiveParameters() {
-        // Настройка типов
-        when(mockPsiTypeBoolean.getPresentableText()).thenReturn("boolean");
 
+        //region getPresentableText
+        when(mockPsiTypeBoolean.getPresentableText()).thenReturn("boolean");
         when(mockPsiTypeByte.getPresentableText()).thenReturn("byte");
         when(mockPsiTypeChar.getPresentableText()).thenReturn("char");
         when(mockPsiTypeShort.getPresentableText()).thenReturn("short");
@@ -298,10 +373,21 @@ public class PsiMethodGeneratorTests {
         when(mockPsiTypeFloat.getPresentableText()).thenReturn("float");
         when(mockPsiTypeDouble.getPresentableText()).thenReturn("double");
         when(mockPsiTypeString.getPresentableText()).thenReturn("String");
+        //endregion
+
+        //region getCanonicalText
+        when(mockPsiTypeBoolean.getCanonicalText()).thenReturn("boolean");
+        when(mockPsiTypeByte.getCanonicalText()).thenReturn("byte");
+        when(mockPsiTypeChar.getCanonicalText()).thenReturn("char");
+        when(mockPsiTypeShort.getCanonicalText()).thenReturn("short");
+        when(mockPsiTypeInt.getCanonicalText()).thenReturn("int");
+        when(mockPsiTypeLong.getCanonicalText()).thenReturn("long");
+        when(mockPsiTypeFloat.getCanonicalText()).thenReturn("float");
+        when(mockPsiTypeDouble.getCanonicalText()).thenReturn("double");
         when(mockPsiTypeString.getCanonicalText()).thenReturn("String");
+        //endregion
 
-
-        // Создание параметров с помощью вспомогательного метода
+        //region Создание параметров с помощью вспомогательного метода
         mockPsiParameterBoolean = createPsiParameter(mockPsiTypeBoolean, "flag");
         mockPsiParameterByte = createPsiParameter(mockPsiTypeByte, "b");
         mockPsiParameterChar = createPsiParameter(mockPsiTypeChar, "c");
@@ -311,6 +397,8 @@ public class PsiMethodGeneratorTests {
         mockPsiParameterFloat = createPsiParameter(mockPsiTypeFloat, "f");
         mockPsiParameterDouble = createPsiParameter(mockPsiTypeDouble, "d");
         mockPsiParameterString = createPsiParameter(mockPsiTypeString, "str");
+        //endregion
+
     }
 
     private void setUpConstructor() {
@@ -326,18 +414,14 @@ public class PsiMethodGeneratorTests {
 
     private void setupReturnMethod() {
         // Подготовка всех параметров
-        PsiParameter[] parameters = {
-                mockPsiParameterString,
-                mockPsiParameterInt,
-                mockPsiParameterBoolean,
-                mockPsiParameterByte,
-                mockPsiParameterChar,
-                mockPsiParameterShort,
-                mockPsiParameterLong,
-                mockPsiParameterFloat,
-                mockPsiParameterDouble
-        };
+        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
         mockReturnMethod = createPsiMethod(mockPsiTypeBoolean, "returnMethod", parameters);
+    }
+
+    private PsiMethod setupReturnMethod(PsiType returnType) {
+        // Подготовка всех параметров
+        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
+        return createPsiMethod(returnType, String.format("returnMethod_%s", returnType.getPresentableText()), parameters);
     }
 
     private void setupNoParamMethod() {
@@ -389,35 +473,13 @@ public class PsiMethodGeneratorTests {
 
     //region Тесты
 
-    @SuppressWarnings({"UnstableApiUsage", "deprecation"})
     @Test
     void testGenerateTypeAssert() {
         //region Типы
-        PsiType[] types = {
-                PsiType.INT,
-                PsiType.BOOLEAN,
-                PsiType.BYTE,
-                PsiType.CHAR,
-                PsiType.SHORT,
-                PsiType.LONG,
-                PsiType.FLOAT,
-                PsiType.DOUBLE,
-                PsiType.VOID,
-                mockPsiTypeString
-        };
+        PsiType[] types = this.getTypesList();
         //endregion
         //region Параметры
-        PsiParameter[] parameters = {
-                mockPsiParameterString,
-                mockPsiParameterInt,
-                mockPsiParameterBoolean,
-                mockPsiParameterByte,
-                mockPsiParameterChar,
-                mockPsiParameterShort,
-                mockPsiParameterLong,
-                mockPsiParameterFloat,
-                mockPsiParameterDouble
-        };
+        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte, mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
         //endregion
         StringBuilder stringBuilder = new StringBuilder();
         for (PsiType type : types) {
@@ -433,8 +495,9 @@ public class PsiMethodGeneratorTests {
         try {
             this.compareFilesByPath(
                     combinePath(this.expectedFolderPath, expectedFileName, Constants.Strings.Extensions.txt),
-                    combinePath(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt)
-            );
+                    combinePath(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt));
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
             println(e.getMessage());
         }
@@ -474,6 +537,8 @@ public class PsiMethodGeneratorTests {
         this.saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         try {
             this.compareFilesByName(actualFileName, expectedFileName, Constants.Strings.Extensions.txt);
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
             println(e.getMessage());
         }
@@ -482,11 +547,14 @@ public class PsiMethodGeneratorTests {
 
     @Test
     void testGetClassHeader() {
+        String actualFileName = "testGetClassHeader";
         String psiClassHeader = this.generator.getClassHeader(this.mockPsiClass, TestType.PARAMETERIZED);
         System.out.println(psiClassHeader);
         this.saveFile(psiClassHeader, this.actualFolderPath, "testGetClassHeader", Constants.Strings.Extensions.txt);
         try {
-            this.compareFilesByName("testGetClassHeader", "testGetClassHeader", Constants.Strings.Extensions.txt);
+            this.compareFilesByName(actualFileName, "testGetClassHeader", Constants.Strings.Extensions.txt);
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -494,11 +562,18 @@ public class PsiMethodGeneratorTests {
 
     @Test
     void testGenerateMethod_UnitTest() {
-        this.generator.setDebug(true);
-        String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
-        System.out.println(parameterizedTestStr);
+//        this.generator.setDebug(true);
+//        String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
+//        System.out.println(parameterizedTestStr);
+        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte,
+                mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
+        for (PsiType type : this.getTypesList()) {
+            mockReturnMethod = setupReturnMethod(type);
+            this.startGeneratorTest("testGenerateMethod_UnitTest", Constants.Strings.Extensions.txt, mockReturnMethod, TestType.UNIT, this.isDebug);
+        }
     }
 
+    //region Тесты с параметрами
     @Test
     void testGenerateMethod_ParameterizedTest() {
         this.generator.setDebug(true);
@@ -513,8 +588,6 @@ public class PsiMethodGeneratorTests {
         stringBuilder.append("\n");
         stringBuilder.append("{\n");
 
-        //String fileName = "Parameterized" + mockVoidMethod.getName(); // Например, ParameterizedVoidMethod
-        //String actualFileName = String.format("%sTests", mockPsiClass.getName()); //testGenerateMethod_ParameterizedTest
         String actualFileName = "testGenerateMethod_ParameterizedTest";
 
         // Сохранение содержимого в файл
@@ -522,10 +595,10 @@ public class PsiMethodGeneratorTests {
         stringBuilder.append(parameterizedTestStr).append("\n");
         stringBuilder.append("}\n");
         saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        //TODO: добавить проверки сгенерированного теста
-        //deleteFile(basePath, fileName);
         try {
             compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -552,10 +625,10 @@ public class PsiMethodGeneratorTests {
         stringBuilder.append(parameterizedTestStr).append("\n");
         stringBuilder.append("}\n");
         saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        //TODO: добавить проверки сгенерированного теста
-        //deleteFile(basePath, fileName);
         try {
             compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -582,13 +655,44 @@ public class PsiMethodGeneratorTests {
         stringBuilder.append(parameterizedTestStr).append("\n");
         stringBuilder.append("}\n");
         saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        //TODO: добавить проверки сгенерированного теста
-        //deleteFile(basePath, fileName);
         try {
             compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
+            if (this.isDeleteActualFiles)
+                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    public void testGenerateNoParamMethod_ParameterizedTest() {
+        this.generator.setDebug(true);
+        String methodImplementationStr = generateJavaMethod(mockNoParamMethod);
+        String parameterizedTestStr = generator.generate(mockNoParamMethod, TestType.PARAMETERIZED);
+        System.out.println(methodImplementationStr);
+        System.out.println(parameterizedTestStr);
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
+        stringBuilder.append("\n");
+        stringBuilder.append("{\n");
+
+        String actualFileName = "testGenerateNoParamMethod_ParameterizedTest";
+
+        // Сохранение содержимого в файл
+        stringBuilder.append(methodImplementationStr).append("\n");
+        stringBuilder.append(parameterizedTestStr).append("\n");
+        stringBuilder.append("}\n");
+        saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
+        try {
+            compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
+            //if (this.isDeleteActualFiles)
+            //     deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    //endregion
     //endregion
 }

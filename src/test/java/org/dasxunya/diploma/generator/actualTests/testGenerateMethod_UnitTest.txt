@@ -1,0 +1,19 @@
+package org.dasxunya.diploma.generator.actualTests;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.*;
+import org.junit.jupiter.params.provider.*;
+class CarTests
+{
+int returnMethod_int(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
+    return 0;
+}
+
+@Test
+public void testReturnMethod_int() {
+    // TODO: Тестирование логики
+	int expectedValue = 0; // Укажите ожидаемое значение
+	Assertions.assertEquals(expectedValue, returnMethod_int(str, i, flag, b, c, s, l, f, d))
+    // TODO: Добавить другие проверки
+}
+
+}

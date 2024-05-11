@@ -17,8 +17,8 @@ class ParameterizedVoidMethod {
             "exampleString, 0, true, 0, 'a', 0, 0, 0.0f, 0.0"
     })
     public void testVoidMethod(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
-        // TODO: Тестируемая логика
+        // TODO: Тестирование логики
         assertTrue(someMethod(str, i, flag, b, c, s, l, f, d));
-        // TODO: добавить другие утверждения
+        // TODO: Добавить другие проверки
     }
 }

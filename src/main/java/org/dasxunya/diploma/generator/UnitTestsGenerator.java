@@ -170,6 +170,7 @@ public class UnitTestsGenerator {
                     case Constants.Strings.Types.booleanType:
                         stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertTrue, methodCallText));
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertFalse, methodCallText));
                         break;
                     case Constants.Strings.Types.intType:
@@ -179,12 +180,14 @@ public class UnitTestsGenerator {
                     case Constants.Strings.Types.charType:
                         stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s(expectedValue, %s)\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
                         break;
                     case Constants.Strings.Types.doubleType:
                     case Constants.Strings.Types.floatType:
                         stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("%s(expectedValue, %s, 0.01) // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
                         break;
                     case Constants.Strings.Types.voidType:
@@ -198,6 +201,7 @@ public class UnitTestsGenerator {
                         }
                         break;
                     default:
+                        stringBuilder.append("\t");
                         stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
                         break;
                 }
@@ -329,7 +333,7 @@ public class UnitTestsGenerator {
         }
         //endregion
 
-        if (testType == TestType.PARAMETERIZED) {
+        if (testType == TestType.PARAMETERIZED && parameters.length > 0) {
             stringBuilder.append("@ParameterizedTest\n");
             stringBuilder.append("@CsvSource({\n");
             //region Добавление тестовых строк данных
@@ -349,14 +353,13 @@ public class UnitTestsGenerator {
             stringBuilder.append("public void ").append(testMethodName).append("(");
             stringBuilder.append(parameterListWithTypes.toString());
             stringBuilder.append(") {\n");
-            stringBuilder.append("    // TODO: Тестируемая логика\n");
+            stringBuilder.append("    // TODO: Тестирование логики\n");
             stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
-            stringBuilder.append("    // TODO: добавить другие утверждения\n");
+            stringBuilder.append("    // TODO: Добавить другие проверки\n");
             stringBuilder.append("}\n");
             //endregion
         } else {
             //region Генерация тела юнит теста
-
             for (PsiParameter parameter : parameters) {
                 String parameterType = parameter.getType().getPresentableText();
                 String name = parameter.getName();
@@ -366,9 +369,9 @@ public class UnitTestsGenerator {
             }
             stringBuilder.append("@Test\n");
             stringBuilder.append("public void ").append(testMethodName).append("() {\n");
-            stringBuilder.append("    // TODO: создать экземпляр тестируемого класса и инициализировать параметры\n");
-            stringBuilder.append("    // TODO: вызвать тестируемый метод с параметрами: ").append(parameterList).append("\n");
-            stringBuilder.append("    // TODO: добавить проверки утверждений с помощью assert\n");
+            stringBuilder.append("    // TODO: Тестирование логики\n");
+            stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
+            stringBuilder.append("    // TODO: Добавить другие проверки\n");
             stringBuilder.append("}\n");
             //endregion
         }

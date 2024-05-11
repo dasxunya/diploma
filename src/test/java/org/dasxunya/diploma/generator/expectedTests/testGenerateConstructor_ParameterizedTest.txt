@@ -14,12 +14,12 @@ void Car(String brand, String model, int year, double price) {
     "exampleString, exampleString, 0, 0.0"
 })
 public void testCar(String brand, String model, int year, double price) {
-    // TODO: Тестируемая логика
+    // TODO: Тестирование логики
 	Assertions.assertEquals(brand, "exampleString");
 	Assertions.assertEquals(model, "exampleString");
 	Assertions.assertEquals(year, 0);
 	Assertions.assertEquals(price, 0.0);
-    // TODO: добавить другие утверждения
+    // TODO: Добавить другие проверки
 }
 
 }
