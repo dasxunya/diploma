@@ -47,20 +47,17 @@ public class UnitTestsGenerator {
     }
 
     private <T> void throwNullPointerException(Class<T> type) throws NullPointerException {
-        if (this.isDebug)
-            this.printLn(Constants.Strings.Debug.Errors.NULL_POINTER + type.getSimpleName());
+        if (this.isDebug) this.printLn(Constants.Strings.Debug.Errors.NULL_POINTER + type.getSimpleName());
         throw new NullPointerException(Constants.Strings.Release.Errors.NULL_POINTER);
     }
 
     private <T> void throwIllegalArgumentException(Class<T> type) throws IllegalArgumentException {
-        if (this.isDebug)
-            this.printLn(Constants.Strings.Debug.Errors.ILLEGAL_ARGUMENT + type.getSimpleName());
+        if (this.isDebug) this.printLn(Constants.Strings.Debug.Errors.ILLEGAL_ARGUMENT + type.getSimpleName());
         throw new IllegalArgumentException(Constants.Strings.Release.Errors.ILLEGAL_ARGUMENT);
     }
 
     private void throwException(String messageRelease, String messageDebug) throws Exception {
-        if (this.isDebug && messageDebug != null && !messageDebug.isEmpty())
-            this.printLn(messageDebug);
+        if (this.isDebug && messageDebug != null && !messageDebug.isEmpty()) this.printLn(messageDebug);
         throw new Exception(messageRelease);
     }
     //endregion
@@ -72,11 +69,153 @@ public class UnitTestsGenerator {
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
+    private String generateExampleData(PsiType type) {
+        String typeName = type.getPresentableText();
+        switch (typeName) {
+            case "int":
+                return "0";
+            case "double":
+                return "0.0";
+            case "String":
+                return "exampleString";
+            case "boolean":
+                return "true";
+            case "byte":
+                return "0";
+            case "char":
+                return "'a'";
+            case "short":
+                return "0";
+            case "long":
+                return "0";
+            case "float":
+                return "0.0f";
+            default:
+                return "null";  // По умолчанию для всех неизвестных или сложных типов
+        }
+    }
+
+    public String getMethodCallString(PsiMethod psiMethod) throws NullPointerException {
+        if (psiMethod == null)
+            throwNullPointerException(PsiMethod.class);
+        if (psiMethod != null) {
+            String methodName = psiMethod.getName();
+            PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            StringJoiner parameterCalls = new StringJoiner(", ");
+            for (PsiParameter parameter : parameters) {
+                String name = parameter.getName();
+                parameterCalls.add(name);
+            }
+            return String.format("%s(%s)", methodName, parameterCalls);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    public String generateTypeAssert(PsiType psiType, String actualExpression) throws NullPointerException {
+        if (psiType == null)
+            throwNullPointerException(PsiType.class);
+        StringBuilder stringBuilder = new StringBuilder();
+        if (psiType != null) {
+            String returnTypeText = psiType.getCanonicalText();
+            switch (returnTypeText.toLowerCase()) {
+                case Constants.Strings.Types.booleanType:
+                    stringBuilder.append(String.format("%s(%s);\n", Constants.Strings.Tests.Assertions.assertTrue, actualExpression));
+                    stringBuilder.append(String.format("%s(%s);\n", Constants.Strings.Tests.Assertions.assertFalse, actualExpression));
+                    break;
+                case Constants.Strings.Types.intType:
+                case Constants.Strings.Types.longType:
+                case Constants.Strings.Types.shortType:
+                case Constants.Strings.Types.byteType:
+                case Constants.Strings.Types.charType:
+                    stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                    stringBuilder.append(String.format("%s(expectedValue, %s);\n", Constants.Strings.Tests.Assertions.assertEqual, actualExpression));
+                    break;
+                case Constants.Strings.Types.doubleType:
+                case Constants.Strings.Types.floatType:
+                    stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                    stringBuilder.append(String.format("%s(expectedValue, %s, 0.01); // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, actualExpression));
+                    break;
+                case Constants.Strings.Types.voidType:
+                    break;
+                default:
+                    stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", actualExpression));
+                    break;
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    private String generateMethodAssert(PsiMethod psiMethod) throws NullPointerException {
+        if (psiMethod == null) throwNullPointerException(PsiMethod.class);
+        StringBuilder stringBuilder = new StringBuilder();
+        if (psiMethod != null) {
+            //region Получение данных метода
+            String methodName = psiMethod.getName();
+            PsiType returnType = psiMethod.getReturnType();
+            PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            StringJoiner parameterCalls = new StringJoiner(", ");
+            for (PsiParameter parameter : parameters) {
+                String name = parameter.getName();
+                parameterCalls.add(name);
+            }
+            //endregion
+            if (returnType == null)
+                throwNullPointerException(PsiType.class);
+            //region Выбор утверждения в зависимости от типа возвращаемого значения
+            String methodCallText = String.format("%s(%s)", methodName, parameterCalls);
+            if (returnType != null) {
+                String returnTypeText = returnType.getCanonicalText();
+                switch (returnTypeText.toLowerCase()) {
+                    case Constants.Strings.Types.booleanType:
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertTrue, methodCallText));
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertFalse, methodCallText));
+                        break;
+                    case Constants.Strings.Types.intType:
+                    case Constants.Strings.Types.longType:
+                    case Constants.Strings.Types.shortType:
+                    case Constants.Strings.Types.byteType:
+                    case Constants.Strings.Types.charType:
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("%s(expectedValue, %s)\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        break;
+                    case Constants.Strings.Types.doubleType:
+                    case Constants.Strings.Types.floatType:
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("%s(expectedValue, %s, 0.01) // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        break;
+                    case Constants.Strings.Types.voidType:
+                        for (PsiParameter psiParameter : parameters) {
+                            stringBuilder.append("\t");
+                            if (!psiParameter.getType().getPresentableText().equalsIgnoreCase(Constants.Strings.Types.stringType)) {
+                                stringBuilder.append(String.format("Assertions.assertEquals(%s, %s);\n", psiParameter.getName(), this.generateExampleData(psiParameter.getType())));
+                            } else {
+                                stringBuilder.append(String.format("Assertions.assertEquals(%s, \"%s\");\n", psiParameter.getName(), this.generateExampleData(psiParameter.getType())));
+                            }
+                        }
+                        break;
+                    default:
+                        stringBuilder.append("\t");
+                        stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
+                        break;
+                }
+            }
+            //endregion
+        }
+
+        return stringBuilder.toString();
+    }
+
     @SuppressWarnings({"StringBufferReplaceableByString", "DataFlowIssue"})
     public String getInfo(PsiMethod psiMethod) throws NullPointerException {
         //region Проверка ссылки на объект
-        if (psiMethod == null)
-            this.throwNullPointerException(PsiMethod.class);
+        if (psiMethod == null) this.throwNullPointerException(PsiMethod.class);
         //endregion
         StringBuilder info = new StringBuilder();
         info.append("Название: ").append(psiMethod.getName()).append("\n");
@@ -106,15 +245,14 @@ public class UnitTestsGenerator {
         return info.toString();
     }
 
-    // Метод для генерации тестового класса для всех методов в классе
-    public String generate(PsiClass psiClass, TestType testType) {
-        return generate(psiClass, null, testType); // null означает все методы
-    }
-
-    // Перегруженный метод для генерации тестового класса для одного конкретного метода
-    public String generate(PsiClass psiClass, PsiMethod psiMethod, TestType testType) {
-        if (psiClass == null)
-            this.throwNullPointerException(PsiClass.class);
+    /**
+     * Возвращает строку, представляющую собой пустой тестирующий класс
+     *
+     * @param psiClass
+     * @return
+     */
+    public String getClassHeader(PsiClass psiClass, TestType testType) {
+        if (psiClass == null) this.throwNullPointerException(PsiClass.class);
         StringBuilder stringBuilder = new StringBuilder();
         //region Список добавляемых библиотек и сборок
         ArrayList<String> imports = new ArrayList<>();
@@ -127,12 +265,9 @@ public class UnitTestsGenerator {
         // Импорт пакета
         stringBuilder.append(String.format("package %s;\n", psiPackage.getQualifiedName()));
         // Добавление библиотек
-        imports.add("org.junit.jupiter.api.Test");
-        if (testType == TestType.PARAMETERIZED) {
-            imports.add("org.junit.jupiter.params.ParameterizedTest");
-            imports.add("org.junit.jupiter.params.provider.Arguments");
-            imports.add("org.junit.jupiter.params.provider.MethodSource");
-        }
+        imports.add(Constants.Strings.Imports.orgJunitJupiterAll);
+        imports.add(Constants.Strings.Imports.orgJunitJupiterParamsAll);
+        imports.add(Constants.Strings.Imports.orgJunitJupiterParamsProviderAll);
         //endregion
         //region Добавление бибилотек в код тестирующего класса
         for (String importStr : imports)
@@ -141,11 +276,25 @@ public class UnitTestsGenerator {
         //region Формирование имени класса
         stringBuilder.append(String.format("class %sTests", psiClass.getName()));
         //endregion
+        return stringBuilder.toString();
+    }
+
+    // Метод для генерации тестового класса для всех методов в классе
+    public String generate(PsiClass psiClass, TestType testType) {
+        return generate(psiClass, null, testType); // null означает все методы
+    }
+
+    // Перегруженный метод для генерации тестового класса для одного конкретного метода
+    public String generate(PsiClass psiClass, PsiMethod psiMethod, TestType testType) {
+        if (psiClass == null) this.throwNullPointerException(PsiClass.class);
+        StringBuilder stringBuilder = new StringBuilder();
+        //region Формирование заголовкка класса с импортами
+        stringBuilder.append(this.getClassHeader(psiClass, testType));
+        //endregion
         //region Формирование тела тестирующего класса
         stringBuilder.append("{");
         stringBuilder.append("\n");
-        if (this.isDebug)
-            stringBuilder.append("// Методы класса:\n");
+        if (this.isDebug) stringBuilder.append("// Методы класса:\n");
         if (psiMethod != null) {
             stringBuilder.append(this.generate(psiMethod, testType));
         } else {
@@ -161,48 +310,56 @@ public class UnitTestsGenerator {
     @SuppressWarnings("DataFlowIssue")
     public String generate(PsiMethod psiMethod, TestType testType) {
         //region Проверка ссылки на объект
-        if (psiMethod == null)
-            this.throwNullPointerException(PsiMethod.class);
+        if (psiMethod == null) this.throwNullPointerException(PsiMethod.class);
         //endregion
         StringBuilder stringBuilder = new StringBuilder();
         //region Вывод отладной информации о методе
-        if (this.isDebug)
-            this.printLn(this.getInfo(psiMethod));
+        if (this.isDebug) this.printLn(this.getInfo(psiMethod));
         //endregion
 
         //region Основные свойства метода
         String methodName = psiMethod.getName();
-        PsiType returnType = psiMethod.getReturnType();
+
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         String testMethodName = "test" + capitalize(methodName);
-        StringJoiner parameterTypes = new StringJoiner(", ");
+        StringJoiner parameterListWithTypes = new StringJoiner(", ");
+
         StringJoiner parameterNames = new StringJoiner(", ");
         StringJoiner parameterList = new StringJoiner(", ");
+        for (PsiParameter parameter : parameters) {
+            String parameterType = parameter.getType().getPresentableText();
+            String name = parameter.getName();
+            parameterListWithTypes.add(parameterType + " " + name);
+        }
         //endregion
 
-        if (testType == TestType.PARAMETERIZED) {
-
-            //region Генерация тела параметризованного теста
+        if (testType == TestType.PARAMETERIZED && parameters.length > 0) {
             stringBuilder.append("@ParameterizedTest\n");
             stringBuilder.append("@CsvSource({\n");
-
-            // Добавление тестовых строк данных
-            // Здесь вы можете добавить свои тестовые данные
-            // Пример: "\"testString1\", 1, 2.0", "\"testString2\", 2, 3.0"
-            stringBuilder.append("    \"exampleString1, 100, 200.0\",\n");
-            stringBuilder.append("    \"exampleString2, 101, 201.0\"\n");
+            //region Добавление тестовых строк данных
+            StringJoiner csvData = new StringJoiner("\",\n    \"", "    \"", "\"\n");
+            StringBuilder testData = new StringBuilder();
+            for (int i = 0; i < parameters.length; i++) {
+                if (i > 0) testData.append(", ");
+                PsiType type = parameters[i].getType();
+                testData.append(generateExampleData(type));
+            }
+            csvData.add(testData.toString());
+            csvData.add(testData.toString());
+            stringBuilder.append(csvData.toString());
+            //endregion
             stringBuilder.append("})\n");
-
+            //region Генерация тела параметризованного теста
             stringBuilder.append("public void ").append(testMethodName).append("(");
-            stringBuilder.append(parameterTypes.toString());
+            stringBuilder.append(parameterListWithTypes.toString());
             stringBuilder.append(") {\n");
-            stringBuilder.append("    // TODO: Тестируемая логика\n");
-            stringBuilder.append("    // TODO: добавить проверки утверждений с помощью assert\n");
+            stringBuilder.append("    // TODO: Тестирование логики\n");
+            stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
+            stringBuilder.append("    // TODO: Добавить другие проверки\n");
             stringBuilder.append("}\n");
             //endregion
         } else {
             //region Генерация тела юнит теста
-
             for (PsiParameter parameter : parameters) {
                 String parameterType = parameter.getType().getPresentableText();
                 String name = parameter.getName();
@@ -212,9 +369,9 @@ public class UnitTestsGenerator {
             }
             stringBuilder.append("@Test\n");
             stringBuilder.append("public void ").append(testMethodName).append("() {\n");
-            stringBuilder.append("    // TODO: создать экземпляр тестируемого класса и инициализировать параметры\n");
-            stringBuilder.append("    // TODO: вызвать тестируемый метод с параметрами: ").append(parameterList).append("\n");
-            stringBuilder.append("    // TODO: добавить проверки утверждений с помощью assert\n");
+            stringBuilder.append("    // TODO: Тестирование логики\n");
+            stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
+            stringBuilder.append("    // TODO: Добавить другие проверки\n");
             stringBuilder.append("}\n");
             //endregion
         }

@@ -1,0 +1,18 @@
+package org.dasxunya.diploma.generator.actualTests;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.*;
+import org.junit.jupiter.params.provider.*;
+class CarTests
+{
+String noParamMethod() {
+    return null;
+}
+
+@Test
+public void testNoParamMethod() {
+    // TODO: Тестирование логики
+	Assertions.assertNotNull(noParamMethod());
+    // TODO: Добавить другие проверки
+}
+
+}

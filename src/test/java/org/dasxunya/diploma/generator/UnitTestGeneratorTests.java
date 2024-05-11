@@ -32,7 +32,7 @@ public class UnitTestGeneratorTests {
     //endregion
 
     //region Методы
-    void Print(Object message) {
+    void print(Object message) {
         System.out.println(message);
     }
     //endregion
@@ -108,7 +108,7 @@ public class UnitTestGeneratorTests {
 
         // Действие
         String result = generator.generate(mockPsiClass, TestType.UNIT);
-        Print(result);
+        print(result);
         // Проверка
         assertNotNull(result);
         assertTrue(result.contains("Car"));

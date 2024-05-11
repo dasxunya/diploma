@@ -1,0 +1,30 @@
+package org.dasxunya.diploma.generator.actualTests;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.*;
+import org.junit.jupiter.params.provider.*;
+class CarTests
+{
+void voidMethod(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
+    // TODO: Реализация метода
+}
+
+@ParameterizedTest
+@CsvSource({
+    "exampleString, 0, true, 0, 'a', 0, 0, 0.0f, 0.0",
+    "exampleString, 0, true, 0, 'a', 0, 0, 0.0f, 0.0"
+})
+public void testVoidMethod(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
+    // TODO: Тестирование логики
+	Assertions.assertEquals(str, "exampleString");
+	Assertions.assertEquals(i, 0);
+	Assertions.assertEquals(flag, true);
+	Assertions.assertEquals(b, 0);
+	Assertions.assertEquals(c, 'a');
+	Assertions.assertEquals(s, 0);
+	Assertions.assertEquals(l, 0);
+	Assertions.assertEquals(f, 0.0f);
+	Assertions.assertEquals(d, 0.0);
+    // TODO: Добавить другие проверки
+}
+
+}
