@@ -560,6 +560,7 @@ public class PsiMethodGeneratorTests {
         }
     }
 
+    //region Тестирование генерации юнит тестов
     @Test
     void testGenerateMethod_UnitTest() {
 //        this.generator.setDebug(true);
@@ -572,126 +573,27 @@ public class PsiMethodGeneratorTests {
             this.startGeneratorTest("testGenerateMethod_UnitTest", Constants.Strings.Extensions.txt, mockReturnMethod, TestType.UNIT, this.isDebug);
         }
     }
+    //endregion
 
-    //region Тесты с параметрами
+    //region Тестирование генерации тестов с параметрами
     @Test
     void testGenerateMethod_ParameterizedTest() {
-        this.generator.setDebug(true);
-        String methodImplementationStr = generateJavaMethod(mockVoidMethod);
-        String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
-        System.out.println(methodImplementationStr);
-        System.out.println(parameterizedTestStr);
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
-        stringBuilder.append("\n");
-        stringBuilder.append("{\n");
-
-        String actualFileName = "testGenerateMethod_ParameterizedTest";
-
-        // Сохранение содержимого в файл
-        stringBuilder.append(methodImplementationStr).append("\n");
-        stringBuilder.append(parameterizedTestStr).append("\n");
-        stringBuilder.append("}\n");
-        saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        try {
-            compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
-            if (this.isDeleteActualFiles)
-                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        this.startGeneratorTest("testGenerateMethod_ParameterizedTest", Constants.Strings.Extensions.txt, mockVoidMethod, TestType.PARAMETERIZED, this.isDebug);
     }
 
     @Test
     public void testGenerateConstructor_ParameterizedTest() {
-        this.generator.setDebug(true);
-        String methodImplementationStr = generateJavaMethod(mockConstructor);
-        String parameterizedTestStr = generator.generate(mockConstructor, TestType.PARAMETERIZED);
-        System.out.println(methodImplementationStr);
-        System.out.println(parameterizedTestStr);
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
-        stringBuilder.append("\n");
-        stringBuilder.append("{\n");
-
-        String actualFileName = "testGenerateConstructor_ParameterizedTest";
-
-        // Сохранение содержимого в файл
-        stringBuilder.append(methodImplementationStr).append("\n");
-        stringBuilder.append(parameterizedTestStr).append("\n");
-        stringBuilder.append("}\n");
-        saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        try {
-            compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
-            if (this.isDeleteActualFiles)
-                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        this.startGeneratorTest("testGenerateConstructor_ParameterizedTest", Constants.Strings.Extensions.txt, mockConstructor, TestType.PARAMETERIZED, this.isDebug);
     }
 
     @Test
     public void testGenerateReturnMethod_ParameterizedTest() {
-        this.generator.setDebug(true);
-        String methodImplementationStr = generateJavaMethod(mockReturnMethod);
-        String parameterizedTestStr = generator.generate(mockReturnMethod, TestType.PARAMETERIZED);
-        System.out.println(methodImplementationStr);
-        System.out.println(parameterizedTestStr);
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
-        stringBuilder.append("\n");
-        stringBuilder.append("{\n");
-
-        String actualFileName = "testGenerateReturnMethod_ParameterizedTest";
-
-        // Сохранение содержимого в файл
-        stringBuilder.append(methodImplementationStr).append("\n");
-        stringBuilder.append(parameterizedTestStr).append("\n");
-        stringBuilder.append("}\n");
-        saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        try {
-            compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
-            if (this.isDeleteActualFiles)
-                deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        this.startGeneratorTest("testGenerateReturnMethod_ParameterizedTest", Constants.Strings.Extensions.txt, mockReturnMethod, TestType.PARAMETERIZED, this.isDebug);
     }
 
     @Test
     public void testGenerateNoParamMethod_ParameterizedTest() {
-        this.generator.setDebug(true);
-        String methodImplementationStr = generateJavaMethod(mockNoParamMethod);
-        String parameterizedTestStr = generator.generate(mockNoParamMethod, TestType.PARAMETERIZED);
-        System.out.println(methodImplementationStr);
-        System.out.println(parameterizedTestStr);
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append(this.generator.getClassHeader(mockPsiClass, TestType.PARAMETERIZED));
-        stringBuilder.append("\n");
-        stringBuilder.append("{\n");
-
-        String actualFileName = "testGenerateNoParamMethod_ParameterizedTest";
-
-        // Сохранение содержимого в файл
-        stringBuilder.append(methodImplementationStr).append("\n");
-        stringBuilder.append(parameterizedTestStr).append("\n");
-        stringBuilder.append("}\n");
-        saveFile(stringBuilder.toString(), this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        try {
-            compareFilesByName(actualFileName, actualFileName, Constants.Strings.Extensions.txt);
-            //if (this.isDeleteActualFiles)
-            //     deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        this.startGeneratorTest("testGenerateNoParamMethod_ParameterizedTest", Constants.Strings.Extensions.txt, mockNoParamMethod, TestType.PARAMETERIZED, this.isDebug);
     }
     //endregion
     //endregion
