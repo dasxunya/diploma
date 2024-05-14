@@ -15,8 +15,8 @@ boolean returnMethod(String str, int i, boolean flag, byte b, char c, short s, l
 })
 public void testReturnMethod(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
     // TODO: Тестирование логики
-	Assertions.assertTrue(returnMethod(str, i, flag, b, c, s, l, f, d))
-	Assertions.assertFalse(returnMethod(str, i, flag, b, c, s, l, f, d))
+    Assertions.assertTrue(returnMethod(str, i, flag, b, c, s, l, f, d));
+    Assertions.assertFalse(returnMethod(str, i, flag, b, c, s, l, f, d));
     // TODO: Добавить другие проверки
 }
 

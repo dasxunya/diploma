@@ -7,6 +7,7 @@ import org.dasxunya.diploma.constants.Constants;
 import org.dasxunya.diploma.constants.TestType;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -62,14 +63,54 @@ public class UnitTestsGenerator {
     }
     //endregion
 
-    private String capitalize(String str) {
+    public String capitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;
         }
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
-    private String generateExampleData(PsiType type) {
+    /**
+     * Добавляет содержимое в StringBuilder с возможностью добавления префикса и суффикса.
+     *
+     * @param sb      StringBuilder, к которому будет добавлено содержимое. Не должен быть null.
+     * @param prefix  Опциональный префикс, который будет добавлен после содержимого. Может быть null.
+     * @param content Содержимое, которое будет добавлено. Не должно быть null.
+     * @param suffix  Опциональный суффикс, который будет добавлен после содержимого. Может быть null.
+     */
+    public void append(StringBuilder sb, String prefix, String content, String suffix) {
+        // Проверяем входные параметры на null
+        Objects.requireNonNull(sb, "StringBuilder не инициализирован");
+        Objects.requireNonNull(content, "Content не инициализирован");
+
+        // Строим строку на основе префикса, содержимого и суффикса
+        if (prefix != null) {
+            sb.append(prefix);
+        }
+        sb.append(content);
+        if (suffix != null) {
+            sb.append(suffix);
+        }
+    }
+
+    public void append(StringBuilder sb, String prefix, String[] lines, String suffix) {
+        for (String line : lines) {
+            this.append(sb, prefix, line, suffix);
+        }
+    }
+
+    /**
+     * Добавляет содержимое в StringBuilder с возможностью добавления префикса и суффикса.
+     *
+     * @param sb      StringBuilder, к которому будет добавлено содержимое. Не должен быть null.
+     * @param content Содержимое, которое будет добавлено. Не должно быть null.
+     * @param suffix  Опциональный суффикс, который будет добавлен после содержимого. Может быть null.
+     */
+    public void append(StringBuilder sb, String content, String suffix) {
+        this.append(sb, null, content, suffix);
+    }
+
+    public String generateExampleData(PsiType type) {
         String typeName = type.getPresentableText();
         switch (typeName) {
             case "int":
@@ -148,7 +189,7 @@ public class UnitTestsGenerator {
 
     private String generateMethodAssert(PsiMethod psiMethod) throws NullPointerException {
         if (psiMethod == null) throwNullPointerException(PsiMethod.class);
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         if (psiMethod != null) {
             //region Получение данных метода
             String methodName = psiMethod.getName();
@@ -168,48 +209,39 @@ public class UnitTestsGenerator {
                 String returnTypeText = returnType.getCanonicalText();
                 switch (returnTypeText.toLowerCase()) {
                     case Constants.Strings.Types.booleanType:
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertTrue, methodCallText));
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("%s(%s)\n", Constants.Strings.Tests.Assertions.assertFalse, methodCallText));
+                        this.append(sb, String.format("%s(%s)", Constants.Strings.Tests.Assertions.assertTrue, methodCallText), Constants.Strings.Code.semiColonNewLine);
+                        this.append(sb, String.format("%s(%s)", Constants.Strings.Tests.Assertions.assertFalse, methodCallText), Constants.Strings.Code.semiColonNewLine);
                         break;
                     case Constants.Strings.Types.intType:
                     case Constants.Strings.Types.longType:
                     case Constants.Strings.Types.shortType:
                     case Constants.Strings.Types.byteType:
                     case Constants.Strings.Types.charType:
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("%s(expectedValue, %s)\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        this.append(sb, String.format("%s expectedValue = 0; // Укажите ожидаемое значение", returnTypeText), Constants.Strings.Code.newLine);
+                        this.append(sb, String.format("%s(expectedValue, %s)", Constants.Strings.Tests.Assertions.assertEqual, methodCallText), Constants.Strings.Code.semiColonNewLine);
                         break;
                     case Constants.Strings.Types.doubleType:
                     case Constants.Strings.Types.floatType:
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("%s expectedValue = 0; // Укажите ожидаемое значение\n", returnTypeText));
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("%s(expectedValue, %s, 0.01) // Укажите дельту для float и double\n", Constants.Strings.Tests.Assertions.assertEqual, methodCallText));
+                        this.append(sb, String.format("%s expectedValue = 0; // Укажите ожидаемое значение", returnTypeText), Constants.Strings.Code.newLine);
+                        this.append(sb, String.format("%s(expectedValue, %s, 0.01); // Укажите дельту для float и double",
+                                Constants.Strings.Tests.Assertions.assertEqual, methodCallText), Constants.Strings.Code.newLine);
                         break;
                     case Constants.Strings.Types.voidType:
                         for (PsiParameter psiParameter : parameters) {
-                            stringBuilder.append("\t");
-                            if (!psiParameter.getType().getPresentableText().equalsIgnoreCase(Constants.Strings.Types.stringType)) {
-                                stringBuilder.append(String.format("Assertions.assertEquals(%s, %s);\n", psiParameter.getName(), this.generateExampleData(psiParameter.getType())));
-                            } else {
-                                stringBuilder.append(String.format("Assertions.assertEquals(%s, \"%s\");\n", psiParameter.getName(), this.generateExampleData(psiParameter.getType())));
-                            }
+                            String exampleDataStr = this.generateExampleData(psiParameter.getType());
+                            String dataStr = psiParameter.getType().getPresentableText().equalsIgnoreCase(Constants.Strings.Types.stringType) ? String.format("\"%s\"", exampleDataStr) : exampleDataStr;
+                            this.append(sb, String.format("Assertions.assertEquals(%s, %s)", psiParameter.getName(), dataStr), Constants.Strings.Code.semiColonNewLine);
                         }
                         break;
                     default:
-                        stringBuilder.append("\t");
-                        stringBuilder.append(String.format("Assertions.assertNotNull(%s);\n", methodCallText));
+                        this.append(sb, String.format("Assertions.assertNotNull(%s)", methodCallText), Constants.Strings.Code.semiColonNewLine);
                         break;
                 }
             }
             //endregion
         }
 
-        return stringBuilder.toString();
+        return sb.toString();
     }
 
     @SuppressWarnings({"StringBufferReplaceableByString", "DataFlowIssue"})
@@ -312,7 +344,7 @@ public class UnitTestsGenerator {
         //region Проверка ссылки на объект
         if (psiMethod == null) this.throwNullPointerException(PsiMethod.class);
         //endregion
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         //region Вывод отладной информации о методе
         if (this.isDebug) this.printLn(this.getInfo(psiMethod));
         //endregion
@@ -334,8 +366,8 @@ public class UnitTestsGenerator {
         //endregion
 
         if (testType == TestType.PARAMETERIZED && parameters.length > 0) {
-            stringBuilder.append("@ParameterizedTest\n");
-            stringBuilder.append("@CsvSource({\n");
+            sb.append("@ParameterizedTest\n");
+            sb.append("@CsvSource({\n");
             //region Добавление тестовых строк данных
             StringJoiner csvData = new StringJoiner("\",\n    \"", "    \"", "\"\n");
             StringBuilder testData = new StringBuilder();
@@ -346,17 +378,17 @@ public class UnitTestsGenerator {
             }
             csvData.add(testData.toString());
             csvData.add(testData.toString());
-            stringBuilder.append(csvData.toString());
+            sb.append(csvData.toString());
             //endregion
-            stringBuilder.append("})\n");
+            sb.append("})\n");
             //region Генерация тела параметризованного теста
-            stringBuilder.append("public void ").append(testMethodName).append("(");
-            stringBuilder.append(parameterListWithTypes.toString());
-            stringBuilder.append(") {\n");
-            stringBuilder.append("    // TODO: Тестирование логики\n");
-            stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
-            stringBuilder.append("    // TODO: Добавить другие проверки\n");
-            stringBuilder.append("}\n");
+            sb.append("public void ").append(testMethodName).append("(");
+            sb.append(parameterListWithTypes.toString());
+            sb.append(") {\n");
+            this.append(sb, Constants.Strings.Code.tabulation, "// TODO: Тестирование логики", Constants.Strings.Code.newLine);
+            this.append(sb, Constants.Strings.Code.tabulation, this.generateMethodAssert(psiMethod).split(Constants.Strings.Code.newLine), Constants.Strings.Code.newLine);
+            this.append(sb, Constants.Strings.Code.tabulation, "// TODO: Добавить другие проверки", Constants.Strings.Code.newLine);
+            sb.append("}\n");
             //endregion
         } else {
             //region Генерация тела юнит теста
@@ -367,16 +399,18 @@ public class UnitTestsGenerator {
                 // в реальном случае может потребоваться инициализация с дефолтными значениями
                 parameterList.add(parameterType + " " + name);
             }
-            stringBuilder.append("@Test\n");
-            stringBuilder.append("public void ").append(testMethodName).append("() {\n");
-            stringBuilder.append("    // TODO: Тестирование логики\n");
-            stringBuilder.append(String.format("%s", this.generateMethodAssert(psiMethod)));
-            stringBuilder.append("    // TODO: Добавить другие проверки\n");
-            stringBuilder.append("}\n");
+            this.append(sb, "@Test", Constants.Strings.Code.newLine);
+            this.append(sb, String.format("public void %s() ", testMethodName), Constants.Strings.Code.openBrace);
+//            sb.append(Constants.Strings.Code.openBrace);
+            this.append(sb, Constants.Strings.Code.tabulation, "// TODO: Тестирование логики", Constants.Strings.Code.newLine);
+            //this.append(sb, Constants.Strings.Code.tabulation, this.generateMethodAssert(psiMethod), Constants.Strings.Code.newLine);
+            this.append(sb, Constants.Strings.Code.tabulation, this.generateMethodAssert(psiMethod).split(Constants.Strings.Code.newLine), Constants.Strings.Code.newLine);
+            this.append(sb, Constants.Strings.Code.tabulation, "// TODO: Добавить другие проверки", Constants.Strings.Code.newLine);
+            sb.append(Constants.Strings.Code.closeBrace);
             //endregion
         }
-        String result = stringBuilder.toString();
-        stringBuilder.setLength(0);
+        String result = sb.toString();
+        sb.setLength(0);
         return result;
     }
 
