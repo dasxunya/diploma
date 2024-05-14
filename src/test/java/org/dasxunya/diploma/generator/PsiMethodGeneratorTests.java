@@ -35,11 +35,11 @@ public class PsiMethodGeneratorTests {
     /**
      * Флаг удаления выходных файлов тестов
      */
-    boolean isDeleteActualFiles = false;
+    boolean isDeleteActualFiles = true;
     /**
      * Флаг отладкиы
      */
-    boolean isDebug = true;
+    boolean isDebug = false;
     MockedStatic<ApplicationManager> mockedApplicationManager;
     /**
      * Абсолютный путь до папки с полученными значениями тестов
@@ -155,6 +155,10 @@ public class PsiMethodGeneratorTests {
      * @throws IOException если произошла ошибка при чтении файлов
      */
     public void compareFilesByPath(String pathToFile1, String pathToFile2) throws Exception {
+        compareFilesByPath(pathToFile1, pathToFile2, false);
+    }
+
+    public void compareFilesByPath(String pathToFile1, String pathToFile2, boolean ignoreTabs) throws Exception {
         Path file1 = Paths.get(pathToFile1);
         Path file2 = Paths.get(pathToFile2);
 
@@ -171,9 +175,15 @@ public class PsiMethodGeneratorTests {
         // Проверяем, что количество строк одинаково
         assertEquals(linesOfFile1.size(), linesOfFile2.size(), "Количество строк в файлах различается.");
 
-        // Сравниваем строки одна за другой
+        // Сравниваем строки одна за другой с учетом или без учета табуляции
         for (int i = 0; i < linesOfFile1.size(); i++) {
-            assertEquals(linesOfFile1.get(i), linesOfFile2.get(i), "Строка " + (i + 1) + " различается.");
+            String line1 = linesOfFile1.get(i);
+            String line2 = linesOfFile2.get(i);
+            if (ignoreTabs) {
+                line1 = line1.trim();
+                line2 = line2.trim();
+            }
+            assertEquals(line1, line2, "Строка " + (i + 1) + " различается.");
         }
 
         println(String.format("Файлы '%s' и '%s' полностью совпадают", pathToFile1, pathToFile2));
@@ -187,10 +197,14 @@ public class PsiMethodGeneratorTests {
      * @param extension        расширение файлов
      * @throws IOException если произошла ошибка при чтении файлов
      */
-    public void compareFilesByName(String fileNameExpected, String fileNameActual, String extension) throws Exception {
+    public void compareFilesByName(String fileNameExpected, String fileNameActual, String extension, boolean isIgnoreTabs) throws Exception {
         String expectedPath = this.combinePath(this.expectedFolderPath, fileNameExpected, extension);
         String actualPath = this.combinePath(this.actualFolderPath, fileNameActual, extension);
-        this.compareFilesByPath(expectedPath, actualPath);
+        this.compareFilesByPath(expectedPath, actualPath, isIgnoreTabs);
+    }
+
+    public void compareFilesByName(String fileNameExpected, String fileNameActual, String extension) throws Exception {
+        this.compareFilesByName(fileNameExpected, fileNameActual, extension, false);
     }
 
     /**
@@ -272,10 +286,21 @@ public class PsiMethodGeneratorTests {
         };
     }
 
-    @SuppressWarnings("UnstableApiUsage")
+    @SuppressWarnings({"UnstableApiUsage", "deprecation"})
     private PsiType[] getTypesList() {
         //region Типы
-        return new PsiType[]{PsiType.INT, PsiType.BOOLEAN, PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE, PsiType.VOID, mockPsiTypeString};
+        return new PsiType[]{
+                PsiType.INT,
+                PsiType.BOOLEAN,
+                PsiType.BYTE,
+                PsiType.CHAR,
+                PsiType.SHORT,
+                PsiType.LONG,
+                PsiType.FLOAT,
+                PsiType.DOUBLE,
+                PsiType.VOID,
+                mockPsiTypeString
+        };
     }
 
     private PsiParameter createPsiParameter(PsiType type, String name) {
@@ -314,7 +339,7 @@ public class PsiMethodGeneratorTests {
      * @param testType            Тип теста
      * @param isDebug             Флаг режима отладки
      */
-    public void startGeneratorTest(String testName, String actualFileExtension, PsiMethod psiMethod, TestType testType, boolean isDebug) {
+    public void startGeneratorTest(String testName, String actualFileExtension, PsiMethod psiMethod, TestType testType, boolean isDebug, boolean isIgnoreTabs) {
         this.generator.setDebug(isDebug);
 
         //region Генерация тестируемого метода и тестирующего метода
@@ -341,7 +366,7 @@ public class PsiMethodGeneratorTests {
             // Сохранение теста
             saveFile(testBodyStr, this.actualFolderPath, testName, actualFileExtension);
             // Сравнение результатов
-            compareFilesByName(testName, testName, actualFileExtension);
+            compareFilesByName(testName, testName, actualFileExtension, isIgnoreTabs);
             // Удаление файла после тестирования
             if (this.isDeleteActualFiles)
                 deleteFile(this.actualFolderPath, testName, actualFileExtension);
@@ -353,6 +378,10 @@ public class PsiMethodGeneratorTests {
         }
         //endregion
 
+    }
+
+    public void startGeneratorTest(String testName, String actualFileExtension, PsiMethod psiMethod, TestType testType, boolean isDebug) {
+        this.startGeneratorTest(testName, actualFileExtension, psiMethod, testType, isDebug, false);
     }
     //endregion
 
@@ -495,7 +524,8 @@ public class PsiMethodGeneratorTests {
         try {
             this.compareFilesByPath(
                     combinePath(this.expectedFolderPath, expectedFileName, Constants.Strings.Extensions.txt),
-                    combinePath(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt));
+                    combinePath(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt)
+            );
             if (this.isDeleteActualFiles)
                 deleteFile(this.actualFolderPath, actualFileName, Constants.Strings.Extensions.txt);
         } catch (Exception e) {
@@ -566,11 +596,95 @@ public class PsiMethodGeneratorTests {
 //        this.generator.setDebug(true);
 //        String parameterizedTestStr = generator.generate(mockVoidMethod, TestType.PARAMETERIZED);
 //        System.out.println(parameterizedTestStr);
-        PsiParameter[] parameters = {mockPsiParameterString, mockPsiParameterInt, mockPsiParameterBoolean, mockPsiParameterByte,
-                mockPsiParameterChar, mockPsiParameterShort, mockPsiParameterLong, mockPsiParameterFloat, mockPsiParameterDouble};
+        PsiParameter[] parameters = {
+                mockPsiParameterString, mockPsiParameterInt,
+                mockPsiParameterBoolean, mockPsiParameterByte,
+                mockPsiParameterChar, mockPsiParameterShort,
+                mockPsiParameterLong, mockPsiParameterFloat,
+                mockPsiParameterDouble
+        };
+        String testNamePrefix = "testGenerateMethod_UnitTest";
         for (PsiType type : this.getTypesList()) {
+            String fileName = String.format("%s_%s", testNamePrefix, type.getPresentableText());
             mockReturnMethod = setupReturnMethod(type);
-            this.startGeneratorTest("testGenerateMethod_UnitTest", Constants.Strings.Extensions.txt, mockReturnMethod, TestType.UNIT, this.isDebug);
+            String returnTypeName = type.getCanonicalText().toLowerCase();
+
+            //region Генерация ожидаемого файла
+            StringBuilder stringBuilder = new StringBuilder();
+            // Импорты и название класса
+            stringBuilder.append(this.generator.getClassHeader(this.mockPsiClass, TestType.UNIT));
+            stringBuilder.append("\n");
+            stringBuilder.append("{\n");
+            stringBuilder.append(this.generateJavaMethod(mockReturnMethod));
+            stringBuilder.append("\n");
+
+            stringBuilder.append("@Test");
+            stringBuilder.append("\n");
+
+            //region Тестирующий метод
+            stringBuilder.append(String.format("public void test%s() {", this.generator.capitalize(mockReturnMethod.getName())));
+            stringBuilder.append("\n");
+            stringBuilder.append("\t// TODO: Тестирование логики");
+            stringBuilder.append("\n");
+            String expectedValueVarName = "expectedValue";
+            switch (returnTypeName) {
+                case Constants.Strings.Types.stringType:
+                    stringBuilder.append(String.format("\tAssertions.assertNotNull(%s);",
+                            this.generator.getMethodCallString(mockReturnMethod)));
+                    stringBuilder.append("\n");
+                    break;
+                case Constants.Strings.Types.booleanType:
+                    stringBuilder.append(String.format("\tAssertions.assertTrue(%s);",
+                            this.generator.getMethodCallString(mockReturnMethod)));
+                    stringBuilder.append("\n");
+                    stringBuilder.append(String.format("\tAssertions.assertFalse(%s);",
+                            this.generator.getMethodCallString(mockReturnMethod)));
+                    stringBuilder.append("\n");
+                    break;
+                case Constants.Strings.Types.intType:
+                case Constants.Strings.Types.longType:
+                case Constants.Strings.Types.shortType:
+                case Constants.Strings.Types.byteType:
+                case Constants.Strings.Types.charType:
+                    stringBuilder.append(String.format("\t%s %s = 0; // Укажите ожидаемое значение", type.getPresentableText(), expectedValueVarName));
+                    stringBuilder.append("\n");
+                    stringBuilder.append(String.format("\tAssertions.assertEquals(%s, %s);",
+                            expectedValueVarName, this.generator.getMethodCallString(mockReturnMethod)));
+                    stringBuilder.append("\n");
+                    break;
+                case Constants.Strings.Types.doubleType:
+                case Constants.Strings.Types.floatType:
+                    stringBuilder.append(String.format("\t%s %s = 0; // Укажите ожидаемое значение", type.getPresentableText(), expectedValueVarName));
+                    stringBuilder.append("\n");
+                    stringBuilder.append(String.format("\tAssertions.assertEquals(%s, %s, 0.01); // Укажите дельту для float и double",
+                            expectedValueVarName, this.generator.getMethodCallString(mockReturnMethod)));
+                    stringBuilder.append("\n");
+                    break;
+                case Constants.Strings.Types.voidType:
+                    UnitTestsGenerator g = new UnitTestsGenerator();
+                    for (PsiParameter psiParameter : parameters) {
+                        String exampleDataStr = g.generateExampleData(psiParameter.getType());
+                        String dataStr = psiParameter.getType().getPresentableText().equalsIgnoreCase(Constants.Strings.Types.stringType) ? String.format("\"%s\"", exampleDataStr) : exampleDataStr;
+                        g.append(stringBuilder, Constants.Strings.Code.tabulation, String.format("Assertions.assertEquals(%s, %s);", psiParameter.getName(), dataStr), Constants.Strings.Code.newLine);
+                    }
+                default:
+                    break;
+            }
+            stringBuilder.append("\t// TODO: Добавить другие проверки");
+            stringBuilder.append("\n");
+            stringBuilder.append("}\n");
+
+            stringBuilder.append("\n");
+            stringBuilder.append("}\n");
+            //endregion
+
+            // Сохранение
+            this.saveFile(stringBuilder.toString(), this.expectedFolderPath, fileName, Constants.Strings.Extensions.txt);
+            //endregion
+
+            this.startGeneratorTest(fileName,
+                    Constants.Strings.Extensions.txt, mockReturnMethod, TestType.UNIT, this.isDebug);
+            this.deleteFile(this.expectedFolderPath, fileName, Constants.Strings.Extensions.txt);
         }
     }
     //endregion
@@ -578,22 +692,26 @@ public class PsiMethodGeneratorTests {
     //region Тестирование генерации тестов с параметрами
     @Test
     void testGenerateMethod_ParameterizedTest() {
-        this.startGeneratorTest("testGenerateMethod_ParameterizedTest", Constants.Strings.Extensions.txt, mockVoidMethod, TestType.PARAMETERIZED, this.isDebug);
+        this.startGeneratorTest("testGenerateMethod_ParameterizedTest",
+                Constants.Strings.Extensions.txt, mockVoidMethod, TestType.PARAMETERIZED, this.isDebug, true);
     }
 
     @Test
     public void testGenerateConstructor_ParameterizedTest() {
-        this.startGeneratorTest("testGenerateConstructor_ParameterizedTest", Constants.Strings.Extensions.txt, mockConstructor, TestType.PARAMETERIZED, this.isDebug);
+        this.startGeneratorTest("testGenerateConstructor_ParameterizedTest",
+                Constants.Strings.Extensions.txt, mockConstructor, TestType.PARAMETERIZED, this.isDebug, true);
     }
 
     @Test
     public void testGenerateReturnMethod_ParameterizedTest() {
-        this.startGeneratorTest("testGenerateReturnMethod_ParameterizedTest", Constants.Strings.Extensions.txt, mockReturnMethod, TestType.PARAMETERIZED, this.isDebug);
+        this.startGeneratorTest("testGenerateReturnMethod_ParameterizedTest",
+                Constants.Strings.Extensions.txt, mockReturnMethod, TestType.PARAMETERIZED, this.isDebug, true);
     }
 
     @Test
     public void testGenerateNoParamMethod_ParameterizedTest() {
-        this.startGeneratorTest("testGenerateNoParamMethod_ParameterizedTest", Constants.Strings.Extensions.txt, mockNoParamMethod, TestType.PARAMETERIZED, this.isDebug);
+        this.startGeneratorTest("testGenerateNoParamMethod_ParameterizedTest",
+                Constants.Strings.Extensions.txt, mockNoParamMethod, TestType.PARAMETERIZED, this.isDebug, true);
     }
     //endregion
     //endregion

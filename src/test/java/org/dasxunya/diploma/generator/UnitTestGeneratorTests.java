@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 public class UnitTestGeneratorTests {
 
@@ -66,8 +66,6 @@ public class UnitTestGeneratorTests {
     //region Тесты
 
     //region Генерация тестов для методов
-
-
 
 
     //endregion

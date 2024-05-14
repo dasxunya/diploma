@@ -31,6 +31,15 @@ public class Constants {
             }
         }
 
+        public static class Code {
+            public static String semiColon = ";";
+            public static String openBrace = "{\n";
+            public static String closeBrace = "}\n";
+            public static final String newLine = "\n";
+            public static String semiColonNewLine = ";\n";
+            public static final String tabulation = "\t";
+        }
+
         public static class Types {
             public static final String booleanType = "boolean";
             public static final String intType = "int";
@@ -44,7 +53,7 @@ public class Constants {
             public static final String voidType = "void";
         }
 
-        public static class Tests{
+        public static class Tests {
             public static class Assertions {
                 public static final String assertEqual = "Assertions.assertEquals";
                 public static final String assertNotEqual = "Assertions.assertNotEquals";

@@ -1,5 +1,0 @@
-package org.dasxunya.diploma.generator.actualTests;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.*;
-import org.junit.jupiter.params.provider.*;
-class CarTests
