@@ -77,6 +77,7 @@ public class UnitTestsPlugin extends AnAction {
         try {
             Project project = anActionEvent.getProject();
             PsiElement psiElement = anActionEvent.getData(CommonDataKeys.PSI_ELEMENT);
+
             if (psiElement == null || project == null) {
                 return; // Early exit if no project or element
             }
@@ -85,8 +86,7 @@ public class UnitTestsPlugin extends AnAction {
                 throw new NullPointerException();
             }
             this.generator.generate(project, psiElement, psiDirectory, TestType.UNIT);
-            //String unitTestStr = this.generator.generate(anActionEvent.getData(CommonDataKeys.PSI_ELEMENT), TestType.UNIT);
-            //println(unitTestStr);
+
         } catch (Exception ex) {
             showMessage(anActionEvent.getProject(), ex.getMessage());
         }
