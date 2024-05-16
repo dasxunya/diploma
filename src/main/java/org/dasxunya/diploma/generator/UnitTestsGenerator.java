@@ -346,7 +346,8 @@ public class UnitTestsGenerator {
         //endregion
         StringBuilder sb = new StringBuilder();
         //region Вывод отладной информации о методе
-        if (this.isDebug) this.printLn(this.getInfo(psiMethod));
+        if (this.isDebug)
+            this.printLn(this.getInfo(psiMethod));
         //endregion
 
         //region Основные свойства метода
