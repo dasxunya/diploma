@@ -501,6 +501,9 @@ public class BaseTest {
                 this.mockNoParamMethod,
                 this.mockReturnMethod
         });
+        when(mockPsiClass.getConstructors()).thenReturn(new PsiMethod[]{
+                this.mockConstructor
+        });
         //endregion
     }
 

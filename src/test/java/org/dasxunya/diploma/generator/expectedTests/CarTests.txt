@@ -2,8 +2,15 @@ package org.dasxunya.diploma.generator.actualTests;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.*;
 import org.junit.jupiter.params.provider.*;
-class CarTests{
-// Методы класса:
+class CarTests {
+
+//region Поля
+	Car car;
+// endregion
+@BeforeEach
+void setUp() {
+	this.car = new Car("exampleString", "exampleString", 0, 0.0);
+}
 @ParameterizedTest
 @CsvSource({
     "exampleString, exampleString, 0, 0.0",
@@ -38,7 +45,7 @@ public void testVoidMethod(String str, int i, boolean flag, byte b, char c, shor
 @Test
 public void testNoParamMethod() {
 	// TODO: Тестирование логики
-	Assertions.assertNotNull(noParamMethod());
+	Assertions.assertNotNull(car.noParamMethod());
 	// TODO: Добавить другие проверки
 }
 @ParameterizedTest
@@ -48,8 +55,9 @@ public void testNoParamMethod() {
 })
 public void testReturnMethod(String str, int i, boolean flag, byte b, char c, short s, long l, float f, double d) {
 	// TODO: Тестирование логики
-	Assertions.assertTrue(returnMethod(str, i, flag, b, c, s, l, f, d));
-	Assertions.assertFalse(returnMethod(str, i, flag, b, c, s, l, f, d));
+	Assertions.assertTrue(car.returnMethod(str, i, flag, b, c, s, l, f, d));
+	Assertions.assertFalse(car.returnMethod(str, i, flag, b, c, s, l, f, d));
 	// TODO: Добавить другие проверки
 }
 }
+

@@ -83,7 +83,7 @@ public class UnitTestsPlugin extends AnAction {
             }
             PsiDirectory psiDirectory = psiElement.getContainingFile().getContainingDirectory();
             if (psiDirectory == null) {
-                throw new NullPointerException();
+                throw new NullPointerException("Не удалось получить директорию проекта");
             }
             this.generator.generate(project, psiElement, psiDirectory, TestType.UNIT);
 
