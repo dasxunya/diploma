@@ -85,7 +85,7 @@ public class UnitTestsPlugin extends AnAction {
             if (psiDirectory == null) {
                 throw new NullPointerException("Не удалось получить директорию проекта");
             }
-            this.generator.generate(project, psiElement, psiDirectory, TestType.UNIT);
+            this.generator.generate(project, psiElement, psiDirectory, TestType.PARAMETERIZED);
 
         } catch (Exception ex) {
             showMessage(anActionEvent.getProject(), ex.getMessage());
